@@ -1,6 +1,7 @@
 package util
 
 import (
+	"SService/config"
 	"errors"
 	"time"
 
@@ -9,44 +10,60 @@ import (
 	"github.com/google/uuid"
 )
 
-// JWT密钥（实际项目中建议从环境变量读取）
-var jwtSecret = []byte("your-secret-key")
-
 // 自定义claims
 type Claims struct {
 	ID       int       `json:"id"`
-	Username string    `json:"username"`
+	Email    string    `json:"email"`
+	Nickname string    `json:"nickname"`
 	UUID     uuid.UUID `json:"uuid"`
 	jwt.RegisteredClaims
 }
 
 // 生成JWT令牌
-func GenerateToken(userID int, username string, userUUID uuid.UUID) (string, error) {
-	// 设置过期时间（例如24小时）
-	expirationTime := time.Now().Add(240 * time.Hour)
+func GenerateToken(userID int, email, nickname string, userUUID uuid.UUID) (string, error) {
+	cfg := config.AppConfig.JWT
+	expireHours := cfg.ExpireHours
+	if expireHours <= 0 {
+		expireHours = 240
+	}
+	issuer := cfg.Issuer
+	if issuer == "" {
+		issuer = "SService"
+	}
+	secret := cfg.Secret
+	if secret == "" {
+		return "", errors.New("jwt secret 未配置")
+	}
+
+	expirationTime := time.Now().Add(time.Duration(expireHours) * time.Hour)
 
 	claims := &Claims{
 		ID:       userID,
-		Username: username,
+		Email:    email,
+		Nickname: nickname,
 		UUID:     userUUID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    "SService",
+			Issuer:    issuer,
 		},
 	}
 
 	// 创建token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
+	return token.SignedString([]byte(secret))
 }
 
 // 解析JWT令牌
 func ParseToken(tokenString string) (*Claims, error) {
 	// 解析token
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return jwtSecret, nil
+		secret := config.AppConfig.JWT.Secret
+		if secret == "" {
+			return nil, errors.New("jwt secret 未配置")
+		}
+		return []byte(secret), nil
 	})
 
 	if err != nil {

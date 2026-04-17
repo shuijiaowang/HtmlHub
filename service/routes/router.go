@@ -24,6 +24,10 @@ func SetupRouter() *gin.Engine {
 	}
 
 	exampleApi := api2.ExampleApi{}
+	htmlRecordApi := api2.HTMLRecordApi{}
+	htmlRecordDataApi := api2.HTMLRecordDataApi{}
+	r.GET("/api/html/share/:subdomain", htmlRecordApi.PublicHTML)
+	r.GET("/", htmlRecordApi.PublicHTML)
 	apiGroup := r.Group("/api")
 	apiGroup.Use(middleware2.JWTInterceptor()) // 应用JWT拦截器
 	{
@@ -33,6 +37,13 @@ func SetupRouter() *gin.Engine {
 			exampleGroup.POST("/test", exampleApi.Test) // 添加消费记录
 		}
 		// 消费拓展路由（需要认证）
+		htmlGroup := apiGroup.Group("/html")
+		{
+			htmlGroup.POST("/upload", htmlRecordApi.Upload)
+			htmlGroup.GET("/my", htmlRecordApi.MyList)
+			htmlGroup.POST("/data/save", htmlRecordDataApi.Save)
+			htmlGroup.GET("/data/load", htmlRecordDataApi.Load)
+		}
 
 	}
 

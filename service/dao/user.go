@@ -1,16 +1,23 @@
 package dao
 
 import (
-	"SService/database"
+	"SService/db"
 	"SService/model"
 	"fmt"
 )
 
-// 根据用户名查询用户
-func FindUserByName(name string) (*model.User, error) {
+// 根据邮箱查询用户
+func FindUserByEmail(email string) (*model.User, error) {
 	var user model.User
 	// Where 条件查询 + First 获取第一条记录
-	result := database.DB.Where("username = ?", name).First(&user)
+	result := db.DB.Where("email = ?", email).First(&user)
+	return &user, result.Error
+}
+
+// 根据昵称查询用户
+func FindUserByNickname(nickname string) (*model.User, error) {
+	var user model.User
+	result := db.DB.Where("nickname = ?", nickname).First(&user)
 	return &user, result.Error
 }
 
@@ -18,6 +25,6 @@ func FindUserByName(name string) (*model.User, error) {
 func CreateUser(user *model.User) error {
 	// Create 插入记录
 	fmt.Printf("UUID类型: %T, 长度: %d字节\n", user.UUID, len(user.UUID))
-	result := database.DB.Create(user)
+	result := db.DB.Create(user)
 	return result.Error
 }

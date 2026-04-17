@@ -71,6 +71,8 @@ func InitDB() error {
 	err = DB.AutoMigrate(
 
 		&model.User{},
+		&model.HtmlRecord{},
+		&model.HtmlRecordData{},
 
 		// 其他模型...
 	)

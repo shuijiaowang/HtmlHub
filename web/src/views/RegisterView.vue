@@ -2,23 +2,27 @@
   <div class="auth-page">
     <div class="auth-card">
       <div class="card-header">
-        <h2>欢迎登录</h2>
-        <p>登录后可在首页右上角查看昵称</p>
+        <h2>创建账号</h2>
+        <p>注册成功后可使用邮箱和密码登录</p>
       </div>
-      <form @submit.prevent="handleLogin">
+      <form @submit.prevent="handleRegister">
+        <div class="form-group">
+          <label>昵称</label>
+          <input v-model="registerForm.nickname" placeholder="请输入昵称" required>
+        </div>
         <div class="form-group">
           <label>邮箱</label>
-          <input type="email" v-model="loginForm.email" placeholder="请输入邮箱" required>
+          <input type="email" v-model="registerForm.email" placeholder="请输入邮箱" required>
         </div>
         <div class="form-group">
           <label>密码</label>
-          <input type="password" v-model="loginForm.password" placeholder="请输入密码" required>
+          <input type="password" v-model="registerForm.password" placeholder="请输入密码" required>
         </div>
-        <button type="submit" class="primary-btn">登录</button>
+        <button type="submit" class="primary-btn">注册</button>
       </form>
       <div class="switch-text">
-        还没有账号？
-        <router-link to="/register">去注册</router-link>
+        已有账号？
+        <router-link to="/login">去登录</router-link>
       </div>
     </div>
   </div>
@@ -26,30 +30,32 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useUserStore } from '@/stores/user.js'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { register } from '@/api/user'
 
-// 登录表单数据
-const loginForm = ref({
+const router = useRouter()
+
+const registerForm = ref({
+  nickname: '',
   email: '',
   password: ''
 })
 
-// 获取用户存储
-const userStore = useUserStore()
-
-// 处理登录逻辑
-const handleLogin = async () => {
-  if (!loginForm.value.email || !loginForm.value.password) {
-    ElMessage.warning('请输入邮箱和密码')
+const handleRegister = async () => {
+  const { nickname, email, password } = registerForm.value
+  if (!nickname || !email || !password) {
+    ElMessage.warning('请完整填写注册信息')
     return
   }
 
-  const success = await userStore.loginIn({ ...loginForm.value })
-  if (success) {
-    ElMessage.success('登录成功')
-  } else {
-    ElMessage.error('登录失败，请检查邮箱和密码')
+  try {
+    await register({ nickname, email, password })
+    ElMessage.success('注册成功，请登录')
+    await router.replace({ name: 'login' })
+  } catch (error) {
+    console.error('注册失败:', error)
+    ElMessage.error('注册失败，请稍后重试')
   }
 }
 </script>

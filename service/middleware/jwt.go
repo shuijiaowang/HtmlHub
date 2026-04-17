@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"SService/config"
 	"SService/util"
 	"SService/util/response"
 	"strings"
@@ -35,16 +36,20 @@ func JWTInterceptor() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		// 【新增】判断 Token 是否即将过期（例如：剩余时间 < 30分钟），如果是则生成新 Token
-		if claims.ExpiresAt != nil && claims.ExpiresAt.Unix()-time.Now().Unix() < 30*60 {
-			newToken, err := util.GenerateToken(claims.ID, claims.Username, claims.UUID)
+		refreshBeforeMinutes := config.AppConfig.JWT.RefreshBeforeMinutes
+		if refreshBeforeMinutes <= 0 {
+			refreshBeforeMinutes = 30
+		}
+		// 当 token 即将过期时刷新
+		if claims.ExpiresAt != nil && claims.ExpiresAt.Unix()-time.Now().Unix() < int64(refreshBeforeMinutes*60) {
+			newToken, err := util.GenerateToken(claims.ID, claims.Email, claims.Nickname, claims.UUID)
 			if err == nil {
 				c.Header("new-token", newToken)
 			}
 		}
 		// 将用户ID存入上下文
 		//c.Set("userID", claims.UserID)
-		//c.Set("username", claims.Username)
+		//c.Set("email", claims.Email)
 		//c.Set("userUUID", claims.UserUUID)
 		c.Set("claims", claims)
 		c.Next()

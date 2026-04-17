@@ -1,8 +1,9 @@
 package main
 
 import (
+	"SService/config"
 	"SService/corn"
-	"SService/database"
+	"SService/db"
 	"SService/routes"
 	"log"
 )
@@ -15,8 +16,9 @@ import (
 // @name x-token
 // @BasePath /
 func main() {
+	config.InitConfig() //读取配置文件
 	// 初始化数据库
-	if err := database.InitDB(); err != nil {
+	if err := db.InitDB(); err != nil {
 		log.Fatalf("数据库初始化失败: %v", err)
 	}
 

@@ -1,7 +1,7 @@
 import service from '@/utils/request.js'
 // @Summary 用户登录
 // @Produce  application/json
-// @Param data body {username:"string",password:"string"}
+// @Param data body {email:"string",password:"string"}
 // @Router /base/login [post]
 export const login = (data) => {
     return service({
@@ -13,11 +13,11 @@ export const login = (data) => {
 
 // @Summary 用户注册
 // @Produce  application/json
-// @Param data body {username:"string",password:"string"}
-// @Router /base/resige [post]
+// @Param data body {nickname:"string",email:"string",password:"string"}
+// @Router /user/register [post]
 export const register = (data) => {
     return service({
-        url: '/user/admin_register',
+        url: '/user/register',
         method: 'post',
         data: data
     })

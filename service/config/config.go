@@ -10,6 +10,7 @@ var AppConfig *Config
 
 type Config struct {
 	MySQL MySQLConfig `yaml:"mysql"` // 嵌套 MySQL 配置（yaml 键名 mysql 对应）
+	JWT   JWTConfig   `yaml:"jwt"`
 }
 type MySQLConfig struct {
 	Prefix   string `yaml:"prefix"`   // 表前缀（yaml 键名对应）
@@ -19,6 +20,13 @@ type MySQLConfig struct {
 	Username string `yaml:"username"` // 用户名
 	Password string `yaml:"password"` // 密码
 	Path     string `yaml:"path"`     // 数据库地址（yaml 中的 path 对应结构体 Path）
+}
+
+type JWTConfig struct {
+	Secret               string `yaml:"secret"`
+	Issuer               string `yaml:"issuer"`
+	ExpireHours          int    `yaml:"expire_hours"`
+	RefreshBeforeMinutes int    `yaml:"refresh_before_minutes"`
 }
 
 func InitConfig() {
