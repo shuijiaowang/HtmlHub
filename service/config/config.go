@@ -2,6 +2,8 @@ package config
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/viper"
 )
@@ -32,10 +34,23 @@ type JWTConfig struct {
 func InitConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("./config")
+
+	// 依次尝试这些目录（每个目录下应有 config.yaml）
+	// 解决宝塔/Supervisor 启动时工作目录不是项目根目录导致找不到配置的问题
+	searchDirs := collectConfigDirs()
+	for _, dir := range searchDirs {
+		viper.AddConfigPath(dir)
+	}
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("读取配置文件失败:%w", err)
+		log.Fatalf(
+			"读取配置文件失败: %v\n"+
+				"请任选其一：\n"+
+				"1) 将 config.yaml 放在可执行文件同级的 config/ 目录下；\n"+
+				"2) 设置环境变量 CONFIG_PATH 为包含 config.yaml 的目录（例如 /www/wwwroot/htmlhub/service/config）；\n"+
+				"3) 在进程守护里把工作目录设为 service 目录。",
+			err,
+		)
 	}
 
 	AppConfig = &Config{}
@@ -43,5 +58,45 @@ func InitConfig() {
 	if err := viper.Unmarshal(AppConfig); err != nil {
 		log.Fatalf("Unable to decode into struct:%v", err)
 	}
+}
 
+func collectConfigDirs() []string {
+	var dirs []string
+	seen := map[string]bool{}
+
+	add := func(p string) {
+		if p == "" {
+			return
+		}
+		abs, err := filepath.Abs(p)
+		if err != nil {
+			return
+		}
+		if seen[abs] {
+			return
+		}
+		seen[abs] = true
+		dirs = append(dirs, abs)
+	}
+
+	if env := os.Getenv("CONFIG_PATH"); env != "" {
+		add(env)
+	}
+
+	if wd, err := os.Getwd(); err == nil {
+		add(filepath.Join(wd, "config"))
+		add(wd)
+	}
+
+	if exe, err := os.Executable(); err == nil {
+		exeDir := filepath.Dir(exe)
+		add(filepath.Join(exeDir, "config"))
+		add(filepath.Join(exeDir, "..", "config"))
+		add(exeDir)
+	}
+
+	add("./config")
+	add(".")
+
+	return dirs
 }

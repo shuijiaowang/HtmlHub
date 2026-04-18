@@ -5,7 +5,8 @@ import router from '@/router'
 
 // 创建axios实例
 const service = axios.create({
-    baseURL: import.meta.env.VITE_BASE_API,
+    // 生产环境未加载 .env.production 时 VITE_BASE_API 为空，会错误请求 /user/login；与后端 /api 对齐
+    baseURL: import.meta.env.VITE_BASE_API || '/api',
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json'
