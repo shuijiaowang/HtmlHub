@@ -1,10 +1,9 @@
-
 mysql:
   port: "3306"
   config: charset=utf8mb4&parseTime=True&loc=Local
-  dbname: html_hub
-  username: root
-  password: "123456"
+  dbname: htmlhub
+  username: htmlhub
+  password: "1rZTk9rf1AtmzPMr"
   path: 127.0.0.1
 
 jwt:
@@ -12,10 +11,8 @@ jwt:
   issuer: "HtmlHub"
   expire_hours: 240
   refresh_before_minutes: 30
-
 # 线上部署时在服务器上改成你的域名与 https（注入脚本里的「注册」跳转用）
-# portal_origin：控制台（Vue）根地址，建议用三级子域，例如 https://htmlhub.lyyxy.top
-# html_public_host：用户页面 host 后缀，四级域名为 {slug}.html_public_host
 app:
-  portal_origin: "http://localhost:5173"
+  portal_origin: "http://htmlhub.lyyxy.top:7788/"
   html_public_host: "htmlhub.lyyxy.top"
+

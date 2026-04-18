@@ -1,6 +1,7 @@
 package api
 
 import (
+	"SService/config"
 	"SService/util"
 	"SService/util/response"
 	"fmt"
@@ -68,29 +69,48 @@ func (h *HTMLRecordApi) PublicHTML(c *gin.Context) {
 		c.String(404, "Not Found")
 		return
 	}
-	injected := injectSyncScript(record.HTMLContent, subdomain)
+	injected := injectSyncScript(record.HTMLContent, subdomain, portalRegisterURL())
 	c.Data(200, "text/html; charset=utf-8", []byte(injected))
 }
 
 func extractSubdomain(host string) string {
-	withoutPort := strings.Split(host, ":")[0]
+	withoutPort := strings.ToLower(strings.Split(host, ":")[0])
+	suffix := strings.TrimSpace(config.AppConfig.App.HtmlPublicHost)
+	if suffix != "" {
+		suffix = strings.ToLower(suffix)
+		if strings.HasSuffix(withoutPort, "."+suffix) {
+			prefix := strings.TrimSuffix(withoutPort, "."+suffix)
+			if prefix != "" && !strings.Contains(prefix, ".") {
+				return prefix
+			}
+		}
+	}
 	parts := strings.Split(withoutPort, ".")
 	if len(parts) >= 2 && parts[len(parts)-1] == "localhost" {
-		return strings.ToLower(parts[0])
+		return parts[0]
 	}
 	if len(parts) >= 3 {
-		return strings.ToLower(parts[0])
+		return parts[0]
 	}
 	return ""
 }
 
-func injectSyncScript(htmlContent, subdomain string) string {
+func portalRegisterURL() string {
+	origin := strings.TrimSpace(config.AppConfig.App.PortalOrigin)
+	origin = strings.TrimSuffix(origin, "/")
+	if origin == "" {
+		origin = "http://localhost:5173"
+	}
+	return origin + "/register"
+}
+
+func injectSyncScript(htmlContent, subdomain, registerURL string) string {
 	script := fmt.Sprintf(`
 <script>
 (function () {
   const SUBDOMAIN = %q;
   const TOKEN_KEY = 'htmlhub_sync_token';
-  const REGISTER_URL = window.location.protocol + '//localhost:5173/register';
+  const REGISTER_URL = %q;
   const LOGIN_API = '/api/user/login';
   const SAVE_API = '/api/html/data/save';
   const LOAD_API = '/api/html/data/load?subdomain=' + encodeURIComponent(SUBDOMAIN);
@@ -236,7 +256,7 @@ func injectSyncScript(htmlContent, subdomain string) string {
   updateStatus();
 })();
 </script>
-`, subdomain)
+`, subdomain, registerURL)
 
 	lower := strings.ToLower(htmlContent)
 	idx := strings.LastIndex(lower, "</body>")

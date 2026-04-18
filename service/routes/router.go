@@ -28,6 +28,9 @@ func SetupRouter() *gin.Engine {
 	htmlRecordDataApi := api2.HTMLRecordDataApi{}
 	r.GET("/api/html/share/:subdomain", htmlRecordApi.PublicHTML)
 	r.GET("/", htmlRecordApi.PublicHTML)
+	// 用户子域上误打开 /home、/index.html 时仍返回注入后的 HTML（与 / 一致，避免落到 Vue 的 history 路由）
+	r.GET("/home", htmlRecordApi.PublicHTML)
+	r.GET("/index.html", htmlRecordApi.PublicHTML)
 	apiGroup := r.Group("/api")
 	apiGroup.Use(middleware2.JWTInterceptor()) // 应用JWT拦截器
 	{

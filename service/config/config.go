@@ -11,8 +11,18 @@ import (
 var AppConfig *Config
 
 type Config struct {
-	MySQL MySQLConfig `yaml:"mysql"` // 嵌套 MySQL 配置（yaml 键名 mysql 对应）
-	JWT   JWTConfig   `yaml:"jwt"`
+	MySQL MySQLConfig     `yaml:"mysql"` // 嵌套 MySQL 配置（yaml 键名 mysql 对应）
+	JWT   JWTConfig       `yaml:"jwt"`
+	App   AppPublicConfig `yaml:"app"` // 可选：公网主站与注入脚本中的注册页地址
+}
+
+// AppPublicConfig 用于区分本地与线上（注入到用户 HTML 的脚本无法读前端 .env）。
+type AppPublicConfig struct {
+	// PortalOrigin 主站前端根地址，不要末尾斜杠，例如 https://lyyxy.top 或 http://localhost:5173
+	PortalOrigin string `yaml:"portal_origin"`
+	// HtmlPublicHost 用户 HTML 访问用的主机后缀（不含端口），形如 htmlhub.example.com。
+	// 完整访问域名为四级：{slug}.HtmlPublicHost（例如 todo.htmlhub.lyyxy.top），三级 htmlhub.* 专用于本项目，根域其它三级可留给其它项目。
+	HtmlPublicHost string `yaml:"html_public_host"`
 }
 type MySQLConfig struct {
 	Prefix   string `yaml:"prefix"`   // 表前缀（yaml 键名对应）

@@ -22,12 +22,17 @@
       <p class="subtitle">上传 HTML 文件文本并查看你自己的上传记录。</p>
 
       <section class="card">
-        <h3>上传 HTML</h3>
-        <p class="tips">填写子域名前缀（示例：test，对应 test.localhost:7789）。不填会自动生成。</p>
-        <form class="upload-form" @submit.prevent="submitUpload">
+        <div class="upload-title-row">
+          <h3>上传 HTML</h3>
+          <button class="text-btn" type="button" @click="uploadPanelOpen = !uploadPanelOpen">
+            {{ uploadPanelOpen ? '收起' : '展开' }}
+          </button>
+        </div>
+        <p v-if="uploadPanelOpen" class="tips">填写页面前缀（示例：todo，访问域名为 todo.{{ htmlPublicHost }}）。不填会自动生成。</p>
+        <form v-if="uploadPanelOpen" class="upload-form" @submit.prevent="submitUpload">
           <label>
-            子域名前缀（唯一）
-            <input v-model="uploadForm.subdomain" placeholder="例如：test">
+            页面前缀（唯一）
+            <input v-model="uploadForm.subdomain" placeholder="例如：todo">
           </label>
           <label>
             文件名
@@ -67,8 +72,12 @@
               <span>{{ formatSize(item.fileSize) }}</span>
             </div>
             <p class="record-route">
-              子域名：{{ item.subdomain }}.localhost:7789
+              访问域名：{{ item.subdomain }}.{{ htmlPublicHost }}
               <a class="share-link" :href="buildShareUrl(item.subdomain)" target="_blank">打开分享链接</a>
+            </p>
+            <p class="record-route">
+              临时测试：{{ buildTempShareUrl(item.subdomain) }}
+              <a class="share-link" :href="buildTempShareUrl(item.subdomain)" target="_blank">打开临时链接</a>
             </p>
             <p class="record-desc">{{ item.description || '无简介' }}</p>
             <div class="record-meta">
@@ -90,9 +99,14 @@ import { uploadHtml, getMyHtmlList } from '@/api/html'
 
 const userStore = useUserStore()
 
+/** 子域名 HTML 访问用 host，本地与线上由 Vite 环境变量区分 */
+const htmlPublicHost = import.meta.env.VITE_HTML_PUBLIC_HOST || 'localhost:7789'
+const tempShareBase = import.meta.env.VITE_TEMP_SHARE_BASE || `${window.location.protocol}//${window.location.host}`
+
 const isLoggedIn = computed(() => !!userStore.token)
 const displayNickname = computed(() => userStore.userInfo.nickname || '已登录用户')
 const records = ref([])
+const uploadPanelOpen = ref(false)
 const uploadForm = reactive({
   subdomain: '',
   fileName: '',
@@ -159,7 +173,12 @@ const formatDate = (dateStr) => {
 
 const buildShareUrl = (subdomain) => {
   if (!subdomain) return '#'
-  return `${window.location.protocol}//${subdomain}.localhost:7789`
+  return `${window.location.protocol}//${subdomain}.${htmlPublicHost}`
+}
+
+const buildTempShareUrl = (subdomain) => {
+  if (!subdomain) return '#'
+  return `${tempShareBase}/api/html/share/${encodeURIComponent(subdomain)}`
 }
 
 onMounted(async () => {
@@ -221,6 +240,12 @@ onMounted(async () => {
   border-radius: 10px;
   padding: 18px;
   margin-bottom: 18px;
+}
+
+.upload-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .tips {
