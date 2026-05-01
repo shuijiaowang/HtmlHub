@@ -1,11 +1,11 @@
 package db
 
 import (
-	"SService/config"
-	"SService/model"
 	"context"
 	"errors"
 	"fmt"
+	"htmlhub/config"
+	"htmlhub/model"
 	"log"
 	"time"
 

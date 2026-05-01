@@ -1,10 +1,10 @@
 package main
 
 import (
-	"SService/config"
-	"SService/corn"
-	"SService/db"
-	"SService/routes"
+	"htmlhub/config"
+	cron "htmlhub/corn"
+	"htmlhub/db"
+	"htmlhub/routes"
 	"log"
 )
 

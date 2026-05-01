@@ -1,8 +1,8 @@
 package api
 
 import (
-	"SService/util"
-	"SService/util/response"
+	"htmlhub/util"
+	"htmlhub/util/response"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

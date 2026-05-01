@@ -1,9 +1,9 @@
 package api
 
 import (
-	"SService/model/request"
-	"SService/util"
-	"SService/util/response"
+	"htmlhub/model/request"
+	"htmlhub/util"
+	"htmlhub/util/response"
 	"log/slog"
 
 	"github.com/gin-gonic/gin"

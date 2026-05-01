@@ -1,8 +1,8 @@
 package routes
 
 import (
-	api2 "SService/api"
-	middleware2 "SService/middleware"
+	api2 "htmlhub/api"
+	middleware2 "htmlhub/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,7 +26,6 @@ func SetupRouter() *gin.Engine {
 	exampleApi := api2.ExampleApi{}
 	htmlRecordApi := api2.HTMLRecordApi{}
 	htmlRecordDataApi := api2.HTMLRecordDataApi{}
-	r.GET("/api/html/share/:subdomain", htmlRecordApi.PublicHTML)
 	r.GET("/", htmlRecordApi.PublicHTML)
 	// 用户子域上误打开 /home、/index.html 时仍返回注入后的 HTML（与 / 一致，避免落到 Vue 的 history 路由）
 	r.GET("/home", htmlRecordApi.PublicHTML)

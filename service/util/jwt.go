@@ -1,8 +1,8 @@
 package util
 
 import (
-	"SService/config"
 	"errors"
+	"htmlhub/config"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -28,7 +28,7 @@ func GenerateToken(userID int, email, nickname string, userUUID uuid.UUID) (stri
 	}
 	issuer := cfg.Issuer
 	if issuer == "" {
-		issuer = "SService"
+		issuer = "htmlhub"
 	}
 	secret := cfg.Secret
 	if secret == "" {

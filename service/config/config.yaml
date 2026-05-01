@@ -4,7 +4,7 @@ mysql:
   config: charset=utf8mb4&parseTime=True&loc=Local
   dbname: html_hub
   username: root
-  password: "123456"
+  password: "123123"
   path: 127.0.0.1
 
 jwt:

@@ -75,10 +75,6 @@
               访问域名：{{ item.subdomain }}.{{ htmlPublicHost }}
               <a class="share-link" :href="buildShareUrl(item.subdomain)" target="_blank">打开分享链接</a>
             </p>
-            <p class="record-route">
-              临时测试：{{ buildTempShareUrl(item.subdomain) }}
-              <a class="share-link" :href="buildTempShareUrl(item.subdomain)" target="_blank">打开临时链接</a>
-            </p>
             <p class="record-desc">{{ item.description || '无简介' }}</p>
             <div class="record-meta">
               <span>审核：{{ item.isApproved ? '已通过' : '未审核' }}</span>
@@ -101,7 +97,6 @@ const userStore = useUserStore()
 
 /** 子域名 HTML 访问用 host，本地与线上由 Vite 环境变量区分 */
 const htmlPublicHost = import.meta.env.VITE_HTML_PUBLIC_HOST || 'localhost:7789'
-const tempShareBase = import.meta.env.VITE_TEMP_SHARE_BASE || `${window.location.protocol}//${window.location.host}`
 
 const isLoggedIn = computed(() => !!userStore.token)
 const displayNickname = computed(() => userStore.userInfo.nickname || '已登录用户')
@@ -174,11 +169,6 @@ const formatDate = (dateStr) => {
 const buildShareUrl = (subdomain) => {
   if (!subdomain) return '#'
   return `${window.location.protocol}//${subdomain}.${htmlPublicHost}`
-}
-
-const buildTempShareUrl = (subdomain) => {
-  if (!subdomain) return '#'
-  return `${tempShareBase}/api/html/share/${encodeURIComponent(subdomain)}`
 }
 
 onMounted(async () => {

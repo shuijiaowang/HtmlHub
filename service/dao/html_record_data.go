@@ -1,9 +1,9 @@
 package dao
 
 import (
-	"SService/db"
-	"SService/model"
 	"errors"
+	"htmlhub/db"
+	"htmlhub/model"
 
 	"gorm.io/gorm"
 )

@@ -1,8 +1,8 @@
 package dao
 
 import (
-	"SService/db"
-	"SService/model"
+	"htmlhub/db"
+	"htmlhub/model"
 )
 
 func CreateHTMLRecord(record *model.HtmlRecord) error {

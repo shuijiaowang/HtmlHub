@@ -1,9 +1,9 @@
 package dao
 
 import (
-	"SService/db"
-	"SService/model"
 	"fmt"
+	"htmlhub/db"
+	"htmlhub/model"
 )
 
 // 根据邮箱查询用户

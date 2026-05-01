@@ -1,4 +1,4 @@
-module SService
+module htmlhub
 
 go 1.25.0
 

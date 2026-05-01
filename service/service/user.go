@@ -1,9 +1,9 @@
 package service
 
 import (
-	"SService/dao"
-	"SService/model"
 	"errors"
+	"htmlhub/dao"
+	"htmlhub/model"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"

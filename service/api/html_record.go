@@ -1,10 +1,10 @@
 package api
 
 import (
-	"SService/config"
-	"SService/util"
-	"SService/util/response"
 	"fmt"
+	"htmlhub/config"
+	"htmlhub/util"
+	"htmlhub/util/response"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -60,10 +60,7 @@ func (h *HTMLRecordApi) MyList(c *gin.Context) {
 }
 
 func (h *HTMLRecordApi) PublicHTML(c *gin.Context) {
-	subdomain := c.Param("subdomain")
-	if subdomain == "" {
-		subdomain = extractSubdomain(c.Request.Host)
-	}
+	subdomain := extractSubdomain(c.Request.Host)
 	record, err := htmlRecordService.GetBySubdomain(subdomain)
 	if err != nil {
 		c.String(404, "Not Found")

@@ -2,9 +2,9 @@
 package middleware
 
 import (
-	"SService/util"
-	"SService/util/response"
 	"fmt"
+	"htmlhub/util"
+	"htmlhub/util/response"
 	"net/http"
 	"runtime/debug"
 

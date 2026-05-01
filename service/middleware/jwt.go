@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"SService/config"
-	"SService/util"
-	"SService/util/response"
+	"htmlhub/config"
+	"htmlhub/util"
+	"htmlhub/util/response"
 	"strings"
 	"time"
 
