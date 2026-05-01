@@ -14,6 +14,9 @@ import (
 type HTMLRecordService struct{}
 
 var subdomainReg = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{2,63}$`)
+var subdomainPrefixReg = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
+
+const subdomainCharset = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -34,8 +37,9 @@ func (s *HTMLRecordService) Upload(userID uint, subdomain, fileName, description
 	if htmlContent == "" {
 		return "", errors.New("HTML内容不能为空")
 	}
-	if subdomain == "" {
-		subdomain = s.generateSubdomain(userID)
+	subdomain, err := s.buildSubdomain(userID, subdomain)
+	if err != nil {
+		return "", err
 	}
 	if !subdomainReg.MatchString(subdomain) {
 		return "", errors.New("子域名前缀仅支持小写字母、数字和中划线，长度3-64")
@@ -79,6 +83,49 @@ func (s *HTMLRecordService) GetBySubdomain(subdomain string) (*model.HtmlRecord,
 	return record, nil
 }
 
-func (s *HTMLRecordService) generateSubdomain(userID uint) string {
-	return fmt.Sprintf("u%d-%06d", userID, rand.Intn(1000000))
+func (s *HTMLRecordService) buildSubdomain(userID uint, prefix string) (string, error) {
+	prefix = strings.ToLower(strings.TrimSpace(prefix))
+	maxAttempts := 20
+
+	for i := 0; i < maxAttempts; i++ {
+		candidate, err := s.generateSubdomain(userID, prefix)
+		if err != nil {
+			return "", err
+		}
+		if !subdomainReg.MatchString(candidate) {
+			return "", errors.New("子域名前缀仅支持小写字母、数字和中划线，长度3-64")
+		}
+		existing, findErr := dao.FindHTMLRecordBySubdomain(candidate)
+		if findErr == nil && existing != nil && existing.ID > 0 {
+			continue
+		}
+		return candidate, nil
+	}
+
+	if prefix != "" {
+		return "", errors.New("子域名前缀已被占用，请更换")
+	}
+	return "", errors.New("系统生成子域名失败，请重试")
+}
+
+func (s *HTMLRecordService) generateSubdomain(userID uint, prefix string) (string, error) {
+	if prefix == "" {
+		return fmt.Sprintf("u%d-%06d", userID, rand.Intn(1000000)), nil
+	}
+	if !subdomainPrefixReg.MatchString(prefix) {
+		return "", errors.New("子域名前缀仅支持小写字母、数字和中划线，长度3-64")
+	}
+	suffixLen := 2 + rand.Intn(2)
+	if len(prefix)+suffixLen > 64 {
+		return "", errors.New("子域名前缀仅支持小写字母、数字和中划线，长度3-64")
+	}
+	return prefix + "-" + randomSubdomainSuffix(suffixLen), nil
+}
+
+func randomSubdomainSuffix(length int) string {
+	buf := make([]byte, length)
+	for i := 0; i < length; i++ {
+		buf[i] = subdomainCharset[rand.Intn(len(subdomainCharset))]
+	}
+	return string(buf)
 }

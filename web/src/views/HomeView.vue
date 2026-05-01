@@ -28,10 +28,10 @@
             {{ uploadPanelOpen ? '收起' : '展开' }}
           </button>
         </div>
-        <p v-if="uploadPanelOpen" class="tips">填写页面前缀（示例：todo，访问域名为 todo.{{ htmlPublicHost }}）。不填会自动生成。</p>
+        <p v-if="uploadPanelOpen" class="tips">填写页面前缀后，系统会自动追加 2-3 位随机后缀（示例：todo-a9 / todo-x7k）；不填写则系统自动生成完整随机子域名。</p>
         <form v-if="uploadPanelOpen" class="upload-form" @submit.prevent="submitUpload">
           <label>
-            页面前缀（唯一）
+            页面前缀（可选）
             <input v-model="uploadForm.subdomain" placeholder="例如：todo">
           </label>
           <label>
