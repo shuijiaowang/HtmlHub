@@ -24,6 +24,24 @@ const router = createRouter({
             name: 'home',
             component: () => import('../views/HomeView.vue'),
             meta: {requiresAuth: true}  // 需要登录才能访问
+        },
+        {
+            path: '/home/upload',
+            name: 'home-upload',
+            component: () => import('../views/UploadView.vue'),
+            meta: {requiresAuth: true}
+        },
+        {
+            path: '/home/manage',
+            name: 'home-manage',
+            component: () => import('../views/ManageView.vue'),
+            meta: {requiresAuth: true}
+        },
+        {
+            path: '/home/showcase',
+            name: 'home-showcase',
+            component: () => import('../views/ShowcaseView.vue'),
+            meta: {requiresAuth: true}
         }
 
     ]
