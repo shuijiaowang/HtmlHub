@@ -15,12 +15,19 @@
             </div>
             <p class="record-route">
               访问域名：{{ item.subdomain }}.{{ htmlPublicHost }}
-              <a class="share-link" :href="buildShareUrl(item.subdomain)" target="_blank">打开分享链接</a>
+              <a class="share-link" :href="buildShareUrl(item)" target="_blank">打开分享链接</a>
             </p>
             <p class="record-desc">{{ item.description || '无简介' }}</p>
             <div class="record-meta">
               <span>审核：{{ item.isApproved ? '已通过' : '未审核' }}</span>
+              <span>可见性：{{ formatVisibility(item.visibility) }}</span>
               <span>创建时间：{{ formatDate(item.createdAt) }}</span>
+            </div>
+            <div class="record-actions">
+              <button class="text-btn" @click="toggleVisibility(item)">
+                切换为{{ item.visibility === 'public' ? '私密' : '公开' }}
+              </button>
+              <button class="text-btn danger-btn" @click="removeRecord(item)">删除</button>
             </div>
           </article>
         </div>
@@ -31,12 +38,14 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { getMyHtmlList } from '@/api/html'
+import { deleteHtmlRecord, getMyHtmlList, updateHtmlVisibility } from '@/api/html'
+import { useUserStore } from '@/stores/user'
 
 /** 子域名 HTML 访问用 host，本地与线上由 Vite 环境变量区分 */
 const htmlPublicHost = import.meta.env.VITE_HTML_PUBLIC_HOST || 'localhost:7789'
 
 const records = ref([])
+const userStore = useUserStore()
 
 const loadRecords = async () => {
   const res = await getMyHtmlList()
@@ -57,9 +66,30 @@ const formatDate = (dateStr) => {
   return date.toLocaleString()
 }
 
-const buildShareUrl = (subdomain) => {
+const formatVisibility = (visibility) => {
+  return visibility === 'public' ? '公开' : '私密'
+}
+
+const toggleVisibility = async (item) => {
+  const nextVisibility = item.visibility === 'public' ? 'private' : 'public'
+  const res = await updateHtmlVisibility(item.id, nextVisibility)
+  item.visibility = res.data?.visibility || nextVisibility
+}
+
+const removeRecord = async (item) => {
+  if (!window.confirm(`确定删除「${item.fileName}」吗？`)) return
+  await deleteHtmlRecord(item.id)
+  await loadRecords()
+}
+
+const buildShareUrl = (item) => {
+  const subdomain = item?.subdomain
   if (!subdomain) return '#'
-  return `${window.location.protocol}//${subdomain}.${htmlPublicHost}`
+  const url = new URL(`${window.location.protocol}//${subdomain}.${htmlPublicHost}`)
+  if ((item.visibility !== 'public' || !item.isApproved) && userStore.token) {
+    url.searchParams.set('token', userStore.token)
+  }
+  return url.toString()
 }
 
 onMounted(async () => {
@@ -138,6 +168,16 @@ onMounted(async () => {
   gap: 16px;
   color: #888;
   font-size: 13px;
+}
+
+.record-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.danger-btn {
+  color: #d93025;
 }
 
 .empty {

@@ -20,3 +20,17 @@ func FindHTMLRecordBySubdomain(subdomain string) (*model.HtmlRecord, error) {
 	err := db.DB.Where("subdomain = ?", subdomain).First(&record).Error
 	return &record, err
 }
+
+func FindHTMLRecordByIDAndUserID(id, userID uint) (*model.HtmlRecord, error) {
+	var record model.HtmlRecord
+	err := db.DB.Where("id = ? AND user_id = ?", id, userID).First(&record).Error
+	return &record, err
+}
+
+func SoftDeleteHTMLRecord(record *model.HtmlRecord) error {
+	return db.DB.Delete(record).Error
+}
+
+func UpdateHTMLRecordVisibility(record *model.HtmlRecord, visibility string) error {
+	return db.DB.Model(record).Update("visibility", visibility).Error
+}

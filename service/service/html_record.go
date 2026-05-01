@@ -18,6 +18,11 @@ var subdomainPrefixReg = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
 
 const subdomainCharset = "abcdefghijklmnopqrstuvwxyz0123456789"
 
+const (
+	HTMLVisibilityPublic  = "public"
+	HTMLVisibilityPrivate = "private"
+)
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
@@ -56,6 +61,7 @@ func (s *HTMLRecordService) Upload(userID uint, subdomain, fileName, description
 		Description: description,
 		FileSize:    fileSize,
 		HTMLContent: htmlContent,
+		Visibility:  HTMLVisibilityPrivate,
 		IsApproved:  false,
 	}
 	if err := dao.CreateHTMLRecord(record); err != nil {
@@ -71,6 +77,42 @@ func (s *HTMLRecordService) ListByUserID(userID uint) ([]model.HtmlRecord, error
 	return dao.ListHTMLRecordsByUserID(userID)
 }
 
+func (s *HTMLRecordService) DeleteByUserID(userID, id uint) error {
+	if userID == 0 {
+		return errors.New("用户信息无效")
+	}
+	if id == 0 {
+		return errors.New("记录ID无效")
+	}
+	record, err := dao.FindHTMLRecordByIDAndUserID(id, userID)
+	if err != nil {
+		return errors.New("记录不存在或无权操作")
+	}
+	return dao.SoftDeleteHTMLRecord(record)
+}
+
+func (s *HTMLRecordService) UpdateVisibilityByUserID(userID, id uint, visibility string) (*model.HtmlRecord, error) {
+	if userID == 0 {
+		return nil, errors.New("用户信息无效")
+	}
+	if id == 0 {
+		return nil, errors.New("记录ID无效")
+	}
+	visibility = strings.TrimSpace(visibility)
+	if visibility != HTMLVisibilityPublic && visibility != HTMLVisibilityPrivate {
+		return nil, errors.New("可见性参数错误")
+	}
+	record, err := dao.FindHTMLRecordByIDAndUserID(id, userID)
+	if err != nil {
+		return nil, errors.New("记录不存在或无权操作")
+	}
+	if err := dao.UpdateHTMLRecordVisibility(record, visibility); err != nil {
+		return nil, err
+	}
+	record.Visibility = visibility
+	return record, nil
+}
+
 func (s *HTMLRecordService) GetBySubdomain(subdomain string) (*model.HtmlRecord, error) {
 	subdomain = strings.ToLower(strings.TrimSpace(subdomain))
 	if !subdomainReg.MatchString(subdomain) {
@@ -81,6 +123,14 @@ func (s *HTMLRecordService) GetBySubdomain(subdomain string) (*model.HtmlRecord,
 		return nil, errors.New("内容不存在")
 	}
 	return record, nil
+}
+
+func (s *HTMLRecordService) CanPublicAccess(record *model.HtmlRecord) bool {
+	return record != nil && record.Visibility == HTMLVisibilityPublic && record.IsApproved
+}
+
+func (s *HTMLRecordService) CanOwnerAccess(record *model.HtmlRecord, userID uint) bool {
+	return record != nil && userID > 0 && record.UserID == userID
 }
 
 func (s *HTMLRecordService) buildSubdomain(userID uint, prefix string) (string, error) {

@@ -5,6 +5,7 @@ import (
 	"htmlhub/config"
 	"htmlhub/util"
 	"htmlhub/util/response"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -59,6 +60,59 @@ func (h *HTMLRecordApi) MyList(c *gin.Context) {
 	response.OkWithData(records, c)
 }
 
+func (h *HTMLRecordApi) Delete(c *gin.Context) {
+	userInfo := util.GetUserInfo(c)
+	if userInfo == nil || userInfo.ID <= 0 {
+		response.FailWithMessage("未获取到用户信息", c)
+		return
+	}
+
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.FailWithMessage("记录ID无效", c)
+		return
+	}
+
+	if err := htmlRecordService.DeleteByUserID(uint(userInfo.ID), uint(id)); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithData(gin.H{
+		"deleted": true,
+	}, c)
+}
+
+func (h *HTMLRecordApi) UpdateVisibility(c *gin.Context) {
+	userInfo := util.GetUserInfo(c)
+	if userInfo == nil || userInfo.ID <= 0 {
+		response.FailWithMessage("未获取到用户信息", c)
+		return
+	}
+
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.FailWithMessage("记录ID无效", c)
+		return
+	}
+
+	var req struct {
+		Visibility string `json:"visibility" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage("可见性参数错误", c)
+		return
+	}
+
+	record, err := htmlRecordService.UpdateVisibilityByUserID(uint(userInfo.ID), uint(id), req.Visibility)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithData(record, c)
+}
+
 func (h *HTMLRecordApi) PublicHTML(c *gin.Context) {
 	subdomain := extractSubdomain(c.Request.Host)
 	record, err := htmlRecordService.GetBySubdomain(subdomain)
@@ -66,7 +120,50 @@ func (h *HTMLRecordApi) PublicHTML(c *gin.Context) {
 		c.String(404, "Not Found")
 		return
 	}
-	injected := injectSyncScript(record.HTMLContent, subdomain, portalRegisterURL())
+
+	if htmlRecordService.CanPublicAccess(record) {
+		renderHTML(c, record.HTMLContent, subdomain)
+		return
+	}
+
+	userID := requestUserID(c)
+	if htmlRecordService.CanOwnerAccess(record, userID) {
+		renderHTML(c, record.HTMLContent, subdomain)
+		return
+	}
+
+	if strings.TrimSpace(c.GetHeader("Authorization")) == "" {
+		c.Data(200, "text/html; charset=utf-8", []byte(accessCheckHTML(portalHomeURL())))
+		return
+	}
+
+	c.String(404, "Not Found")
+}
+
+func requestUserID(c *gin.Context) uint {
+	userInfo := util.GetUserInfo(c)
+	if userInfo != nil && userInfo.ID > 0 {
+		return uint(userInfo.ID)
+	}
+
+	token := strings.TrimSpace(c.GetHeader("Authorization"))
+	if token == "" {
+		return 0
+	}
+	parts := strings.Fields(token)
+	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+		token = parts[1]
+	}
+
+	claims, err := util.ParseToken(token)
+	if err != nil || claims == nil || claims.ID <= 0 {
+		return 0
+	}
+	return uint(claims.ID)
+}
+
+func renderHTML(c *gin.Context, recordHTML, subdomain string) {
+	injected := injectSyncScript(recordHTML, subdomain, portalRegisterURL())
 	c.Data(200, "text/html; charset=utf-8", []byte(injected))
 }
 
@@ -99,6 +196,15 @@ func portalRegisterURL() string {
 		origin = "http://localhost:5173"
 	}
 	return origin + "/register"
+}
+
+func portalHomeURL() string {
+	origin := strings.TrimSpace(config.AppConfig.App.PortalOrigin)
+	origin = strings.TrimSuffix(origin, "/")
+	if origin == "" {
+		origin = "http://localhost:5173"
+	}
+	return origin + "/home"
 }
 
 func injectSyncScript(htmlContent, subdomain, registerURL string) string {
@@ -261,4 +367,57 @@ func injectSyncScript(htmlContent, subdomain, registerURL string) string {
 		return htmlContent[:idx] + script + htmlContent[idx:]
 	}
 	return htmlContent + script
+}
+
+func accessCheckHTML(homeURL string) string {
+	return fmt.Sprintf(`
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>页面未公开</title>
+</head>
+<body>
+  <script>
+  (async function () {
+    const TOKEN_KEY = 'htmlhub_sync_token';
+    const HOME_URL = %q;
+    const currentUrl = new URL(window.location.href);
+    const queryToken = currentUrl.searchParams.get('token');
+    if (queryToken) {
+      localStorage.setItem(TOKEN_KEY, queryToken);
+      currentUrl.searchParams.delete('token');
+      window.history.replaceState(null, '', currentUrl.toString());
+    }
+
+    const token = localStorage.getItem(TOKEN_KEY) || '';
+    if (!token) {
+      document.body.innerHTML = '<div style="padding:20px">该页面未公开，请从控制台打开</div>';
+      setTimeout(() => { location.href = HOME_URL; }, 2000);
+      return;
+    }
+
+    try {
+      const res = await fetch(currentUrl.toString(), {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) {
+        localStorage.removeItem(TOKEN_KEY);
+        document.body.innerHTML = '<div style="padding:20px">登录已过期或无权访问，请重新打开</div>';
+        setTimeout(() => { location.href = HOME_URL; }, 1500);
+        return;
+      }
+
+      const html = await res.text();
+      document.open();
+      document.write(html);
+      document.close();
+    } catch (e) {
+      document.body.textContent = '加载失败';
+      return;
+    }
+  })();
+  </script>
+</body>
+</html>`, homeURL)
 }
