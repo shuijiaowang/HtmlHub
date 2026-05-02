@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"htmlhub/config"
+	"htmlhub/dao"
 	"htmlhub/util"
 	"htmlhub/util/response"
 	"strconv"
@@ -110,6 +111,100 @@ func (h *HTMLRecordApi) UpdateVisibility(c *gin.Context) {
 		return
 	}
 
+	response.OkWithData(record, c)
+}
+
+func (h *HTMLRecordApi) AdminList(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	records, total, err := htmlRecordService.AdminList(dao.AdminHTMLRecordQuery{
+		Nickname:       strings.TrimSpace(c.Query("nickname")),
+		Email:          strings.TrimSpace(c.Query("email")),
+		Subdomain:      strings.TrimSpace(c.Query("subdomain")),
+		Visibility:     strings.TrimSpace(c.Query("visibility")),
+		ApprovalStatus: strings.TrimSpace(c.Query("approvalStatus")),
+		Page:           page,
+		PageSize:       pageSize,
+	})
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithData(gin.H{
+		"list":     records,
+		"total":    total,
+		"page":     page,
+		"pageSize": pageSize,
+	}, c)
+}
+
+func (h *HTMLRecordApi) AdminDetail(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.FailWithMessage("记录ID无效", c)
+		return
+	}
+	record, err := htmlRecordService.AdminGet(uint(id))
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(record, c)
+}
+
+func (h *HTMLRecordApi) AdminUpdateApprovalStatus(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.FailWithMessage("记录ID无效", c)
+		return
+	}
+	var req struct {
+		ApprovalStatus string `json:"approvalStatus" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage("审核状态参数错误", c)
+		return
+	}
+	record, err := htmlRecordService.AdminUpdateApprovalStatus(uint(id), req.ApprovalStatus)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(record, c)
+}
+
+func (h *HTMLRecordApi) AdminDelete(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.FailWithMessage("记录ID无效", c)
+		return
+	}
+	if err := htmlRecordService.AdminDelete(uint(id)); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(gin.H{"deleted": true}, c)
+}
+
+func (h *HTMLRecordApi) AdminUpdateSubdomain(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.FailWithMessage("记录ID无效", c)
+		return
+	}
+	var req struct {
+		Subdomain string `json:"subdomain" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage("子域名参数错误", c)
+		return
+	}
+	record, err := htmlRecordService.AdminUpdateSubdomain(uint(id), req.Subdomain)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
 	response.OkWithData(record, c)
 }
 

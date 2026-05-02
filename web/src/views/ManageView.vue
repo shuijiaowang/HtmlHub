@@ -20,7 +20,7 @@
             </p>
             <p class="record-desc">{{ item.description || '无简介' }}</p>
             <div class="record-meta">
-              <span>审核：{{ item.isApproved ? '已通过' : '未审核' }}</span>
+              <span>审核：{{ formatApprovalStatus(item.approvalStatus) }}</span>
               <span>可见性：{{ formatVisibility(item.visibility) }}</span>
               <span>访问次数：{{ item.visitCount || 0 }}</span>
               <span>创建时间：{{ formatDate(item.createdAt) }}</span>
@@ -92,10 +92,19 @@ const buildShareUrl = (item) => {
   const subdomain = item?.subdomain
   if (!subdomain) return '#'
   const url = new URL(`${window.location.protocol}//${subdomain}.${htmlPublicHost}`)
-  if ((item.visibility !== 'public' || !item.isApproved) && userStore.token) {
+  if ((item.visibility !== 'public' || item.approvalStatus !== 'approved') && userStore.token) {
     url.searchParams.set('token', userStore.token)
   }
   return url.toString()
+}
+
+const formatApprovalStatus = (status) => {
+  const statusMap = {
+    pending: '未审核',
+    approved: '通过',
+    rejected: '拒绝'
+  }
+  return statusMap[status] || '未审核'
 }
 
 onMounted(async () => {

@@ -28,3 +28,25 @@ func CreateUser(user *model.User) error {
 	result := db.DB.Create(user)
 	return result.Error
 }
+
+type AdminUserRow struct {
+	ID       uint
+	Nickname string
+	Email    string
+	Role     string
+}
+
+func ListUsersForAdmin(page, pageSize int) ([]AdminUserRow, int64, error) {
+	var total int64
+	var users []AdminUserRow
+	query := db.DB.Model(&model.User{})
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := query.Select("id", "nickname", "email", "role").
+		Order("id DESC").
+		Offset((page - 1) * pageSize).
+		Limit(pageSize).
+		Find(&users).Error
+	return users, total, err
+}

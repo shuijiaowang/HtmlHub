@@ -48,6 +48,16 @@ func SetupRouter() *gin.Engine {
 			htmlGroup.POST("/data/save", htmlRecordDataApi.Save)
 			htmlGroup.GET("/data/load", htmlRecordDataApi.Load)
 		}
+		adminGroup := apiGroup.Group("/admin")
+		adminGroup.Use(middleware2.AdminInterceptor())
+		{
+			adminGroup.GET("/users", userApi.AdminList)
+			adminGroup.GET("/html", htmlRecordApi.AdminList)
+			adminGroup.GET("/html/:id", htmlRecordApi.AdminDetail)
+			adminGroup.PUT("/html/:id/approval", htmlRecordApi.AdminUpdateApprovalStatus)
+			adminGroup.PUT("/html/:id/subdomain", htmlRecordApi.AdminUpdateSubdomain)
+			adminGroup.DELETE("/html/:id", htmlRecordApi.AdminDelete)
+		}
 
 	}
 

@@ -55,14 +55,14 @@ func (s *HTMLRecordService) Upload(userID uint, subdomain, fileName, description
 	}
 
 	record := &model.HtmlRecord{
-		UserID:      userID,
-		Subdomain:   subdomain,
-		FileName:    fileName,
-		Description: description,
-		FileSize:    fileSize,
-		HTMLContent: htmlContent,
-		Visibility:  HTMLVisibilityPrivate,
-		IsApproved:  false,
+		UserID:         userID,
+		Subdomain:      subdomain,
+		FileName:       fileName,
+		Description:    description,
+		FileSize:       fileSize,
+		HTMLContent:    htmlContent,
+		Visibility:     HTMLVisibilityPrivate,
+		ApprovalStatus: model.HTMLApprovalPending,
 	}
 	if err := dao.CreateHTMLRecord(record); err != nil {
 		return "", err
@@ -126,7 +126,7 @@ func (s *HTMLRecordService) GetBySubdomain(subdomain string) (*model.HtmlRecord,
 }
 
 func (s *HTMLRecordService) CanPublicAccess(record *model.HtmlRecord) bool {
-	return record != nil && record.Visibility == HTMLVisibilityPublic && record.IsApproved
+	return record != nil && record.Visibility == HTMLVisibilityPublic && record.ApprovalStatus == model.HTMLApprovalApproved
 }
 
 func (s *HTMLRecordService) CanOwnerAccess(record *model.HtmlRecord, userID uint) bool {
@@ -138,6 +138,84 @@ func (s *HTMLRecordService) IncrementVisitCount(recordID uint) error {
 		return errors.New("记录ID无效")
 	}
 	return dao.IncrementHTMLRecordVisitCount(recordID)
+}
+
+func (s *HTMLRecordService) AdminList(params dao.AdminHTMLRecordQuery) ([]dao.AdminHTMLRecordRow, int64, error) {
+	if params.Page <= 0 {
+		params.Page = 1
+	}
+	if params.PageSize <= 0 || params.PageSize > 100 {
+		params.PageSize = 10
+	}
+	params.Visibility = strings.TrimSpace(params.Visibility)
+	params.ApprovalStatus = strings.TrimSpace(params.ApprovalStatus)
+	if params.Visibility != "" && params.Visibility != HTMLVisibilityPublic && params.Visibility != HTMLVisibilityPrivate {
+		return nil, 0, errors.New("可见性参数错误")
+	}
+	if params.ApprovalStatus != "" && !isValidApprovalStatus(params.ApprovalStatus) {
+		return nil, 0, errors.New("审核状态参数错误")
+	}
+	return dao.ListHTMLRecordsForAdmin(params)
+}
+
+func (s *HTMLRecordService) AdminGet(id uint) (*dao.AdminHTMLRecordRow, error) {
+	if id == 0 {
+		return nil, errors.New("记录ID无效")
+	}
+	return dao.GetHTMLRecordForAdmin(id)
+}
+
+func (s *HTMLRecordService) AdminUpdateApprovalStatus(id uint, status string) (*model.HtmlRecord, error) {
+	if id == 0 {
+		return nil, errors.New("记录ID无效")
+	}
+	status = strings.TrimSpace(status)
+	if !isValidApprovalStatus(status) {
+		return nil, errors.New("审核状态参数错误")
+	}
+	record, err := dao.FindHTMLRecordByID(id)
+	if err != nil {
+		return nil, errors.New("记录不存在")
+	}
+	if err := dao.UpdateHTMLRecordApprovalStatus(record, status); err != nil {
+		return nil, err
+	}
+	record.ApprovalStatus = status
+	return record, nil
+}
+
+func (s *HTMLRecordService) AdminDelete(id uint) error {
+	if id == 0 {
+		return errors.New("记录ID无效")
+	}
+	record, err := dao.FindHTMLRecordByID(id)
+	if err != nil {
+		return errors.New("记录不存在")
+	}
+	return dao.SoftDeleteHTMLRecord(record)
+}
+
+func (s *HTMLRecordService) AdminUpdateSubdomain(id uint, subdomain string) (*model.HtmlRecord, error) {
+	if id == 0 {
+		return nil, errors.New("记录ID无效")
+	}
+	subdomain = strings.ToLower(strings.TrimSpace(subdomain))
+	if !subdomainReg.MatchString(subdomain) {
+		return nil, errors.New("子域名前缀仅支持小写字母、数字和中划线，长度3-64")
+	}
+	record, err := dao.FindHTMLRecordByID(id)
+	if err != nil {
+		return nil, errors.New("记录不存在")
+	}
+	existing, err := dao.FindHTMLRecordBySubdomain(subdomain)
+	if err == nil && existing != nil && existing.ID != record.ID {
+		return nil, errors.New("子域名前缀已被占用，请更换")
+	}
+	if err := dao.UpdateHTMLRecordSubdomain(record, subdomain); err != nil {
+		return nil, err
+	}
+	record.Subdomain = subdomain
+	return record, nil
 }
 
 func (s *HTMLRecordService) buildSubdomain(userID uint, prefix string) (string, error) {
@@ -185,4 +263,8 @@ func randomSubdomainSuffix(length int) string {
 		buf[i] = subdomainCharset[rand.Intn(len(subdomainCharset))]
 	}
 	return string(buf)
+}
+
+func isValidApprovalStatus(status string) bool {
+	return status == model.HTMLApprovalPending || status == model.HTMLApprovalApproved || status == model.HTMLApprovalRejected
 }

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"htmlhub/config"
+	"htmlhub/model"
 	"htmlhub/util"
 	"htmlhub/util/response"
 	"strings"
@@ -42,7 +43,7 @@ func JWTInterceptor() gin.HandlerFunc {
 		}
 		// 当 token 即将过期时刷新
 		if claims.ExpiresAt != nil && claims.ExpiresAt.Unix()-time.Now().Unix() < int64(refreshBeforeMinutes*60) {
-			newToken, err := util.GenerateToken(claims.ID, claims.Email, claims.Nickname, claims.UUID)
+			newToken, err := util.GenerateToken(claims.ID, claims.Email, claims.Nickname, claims.UUID, claims.Role)
 			if err == nil {
 				c.Header("new-token", newToken)
 			}
@@ -52,6 +53,18 @@ func JWTInterceptor() gin.HandlerFunc {
 		//c.Set("email", claims.Email)
 		//c.Set("userUUID", claims.UserUUID)
 		c.Set("claims", claims)
+		c.Next()
+	}
+}
+
+func AdminInterceptor() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		claims := util.GetUserInfo(c)
+		if claims == nil || (claims.Role != model.UserRoleAdmin && claims.Role != model.UserRoleSuperAdmin) {
+			response.NoAuth("无管理员权限", c)
+			c.Abort()
+			return
+		}
 		c.Next()
 	}
 }

@@ -9,14 +9,16 @@ export const useUserStore = defineStore('user', () => {
     const userInfo = useStorage('userInfo', {
         nickname: '',
         email: '',
-        uuid: ''
+        uuid: '',
+        role: ''
     })
 
     const setUserInfo = (info) => {
         userInfo.value = {
             nickname: info.nickname || userInfo.value.nickname,
             email: info.email || userInfo.value.email,
-            uuid: info.uuid || userInfo.value.uuid
+            uuid: info.uuid || userInfo.value.uuid,
+            role: info.role || userInfo.value.role
         }
     }
 
@@ -30,7 +32,8 @@ export const useUserStore = defineStore('user', () => {
         userInfo.value = {
             nickname: '',
             email: '',
-            uuid: ''
+            uuid: '',
+            role: ''
         }
     }
 
@@ -55,7 +58,8 @@ export const useUserStore = defineStore('user', () => {
             setUserInfo({
                 nickname: res.data.nickname,
                 email: res.data.email,
-                uuid: res.data.uuid
+                uuid: res.data.uuid,
+                role: res.data.role
             })
 
             const targetRoute = 'home'

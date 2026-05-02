@@ -1,6 +1,7 @@
 import {createRouter, createWebHistory} from 'vue-router'
 import LoginView from "@/views/LoginView.vue";
 import RegisterView from "@/views/RegisterView.vue";
+import { useUserStore } from '@/stores/user'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,6 +43,12 @@ const router = createRouter({
             name: 'home-showcase',
             component: () => import('../views/ShowcaseView.vue'),
             meta: {requiresAuth: true}
+        },
+        {
+            path: '/admin',
+            name: 'admin',
+            component: () => import('../views/AdminView.vue'),
+            meta: {requiresAuth: true, requiresAdmin: true}
         }
 
     ]
@@ -51,6 +58,14 @@ router.beforeEach((to, from, next) => {
     const isAuthenticated = !!localStorage.getItem('token')
     if (to.meta.requiresAuth && !isAuthenticated) {
         next('/login')
+    } else if (to.meta.requiresAdmin) {
+        const userStore = useUserStore()
+        const role = userStore.userInfo?.role
+        if (role === 'admin' || role === 'super_admin') {
+            next()
+        } else {
+            next('/home')
+        }
     } else {
         next()
     }

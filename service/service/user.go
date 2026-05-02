@@ -40,6 +40,7 @@ func (s *UserService) Register(nickname, email, password string) error {
 		Email:    email,
 		Password: string(hashedPassword), // 存储加密后的密码
 		UUID:     userUUID.String(),
+		Role:     model.UserRoleUser,
 	}
 
 	// 6. 调用仓库层保存用户
@@ -63,4 +64,34 @@ func (s *UserService) Login(email, password string) (*model.User, bool) {
 		return nil, false
 	}
 	return user, true
+}
+
+type AdminUserListItem struct {
+	ID       uint   `json:"id"`
+	Nickname string `json:"nickname"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+}
+
+func (s *UserService) AdminListUsers(page, pageSize int) ([]AdminUserListItem, int64, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 || pageSize > 100 {
+		pageSize = 10
+	}
+	users, total, err := dao.ListUsersForAdmin(page, pageSize)
+	if err != nil {
+		return nil, 0, err
+	}
+	items := make([]AdminUserListItem, 0, len(users))
+	for _, user := range users {
+		items = append(items, AdminUserListItem{
+			ID:       user.ID,
+			Nickname: user.Nickname,
+			Email:    user.Email,
+			Role:     user.Role,
+		})
+	}
+	return items, total, nil
 }

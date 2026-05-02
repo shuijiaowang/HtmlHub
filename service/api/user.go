@@ -3,6 +3,7 @@ package api
 import (
 	"htmlhub/util"
 	"htmlhub/util/response"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -49,13 +50,16 @@ func (h *UserApi) Login(c *gin.Context) {
 		response.FailWithMessage("邮箱或密码错误", c)
 		return
 	}
+	if user.Role == "" {
+		user.Role = "user"
+	}
 	userUUID, err := uuid.Parse(user.UUID)
 	if err != nil {
 		response.FailWithMessage("UUID格式错误", c)
 		return
 	}
 	// 生成JWT令牌
-	token, err := util.GenerateToken(int(user.ID), user.Email, user.Nickname, userUUID)
+	token, err := util.GenerateToken(int(user.ID), user.Email, user.Nickname, userUUID, user.Role)
 	if err != nil {
 		response.FailWithMessage("生成令牌失败", c)
 		return
@@ -66,7 +70,24 @@ func (h *UserApi) Login(c *gin.Context) {
 		"nickname": user.Nickname,
 		"email":    user.Email,
 		"uuid":     user.UUID,
+		"role":     user.Role,
 		"token":    token,
+	}, c)
+}
+
+func (h *UserApi) AdminList(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	users, total, err := userService.AdminListUsers(page, pageSize)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(gin.H{
+		"list":     users,
+		"total":    total,
+		"page":     page,
+		"pageSize": pageSize,
 	}, c)
 }
 

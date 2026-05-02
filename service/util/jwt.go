@@ -16,11 +16,12 @@ type Claims struct {
 	Email    string    `json:"email"`
 	Nickname string    `json:"nickname"`
 	UUID     uuid.UUID `json:"uuid"`
+	Role     string    `json:"role"`
 	jwt.RegisteredClaims
 }
 
 // 生成JWT令牌
-func GenerateToken(userID int, email, nickname string, userUUID uuid.UUID) (string, error) {
+func GenerateToken(userID int, email, nickname string, userUUID uuid.UUID, role string) (string, error) {
 	cfg := config.AppConfig.JWT
 	expireHours := cfg.ExpireHours
 	if expireHours <= 0 {
@@ -42,6 +43,7 @@ func GenerateToken(userID int, email, nickname string, userUUID uuid.UUID) (stri
 		Email:    email,
 		Nickname: nickname,
 		UUID:     userUUID,
+		Role:     role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
