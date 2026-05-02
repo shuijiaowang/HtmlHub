@@ -3,6 +3,8 @@ package dao
 import (
 	"htmlhub/db"
 	"htmlhub/model"
+
+	"gorm.io/gorm"
 )
 
 func CreateHTMLRecord(record *model.HtmlRecord) error {
@@ -33,4 +35,8 @@ func SoftDeleteHTMLRecord(record *model.HtmlRecord) error {
 
 func UpdateHTMLRecordVisibility(record *model.HtmlRecord, visibility string) error {
 	return db.DB.Model(record).Update("visibility", visibility).Error
+}
+
+func IncrementHTMLRecordVisitCount(id uint) error {
+	return db.DB.Model(&model.HtmlRecord{}).Where("id = ?", id).Update("visit_count", gorm.Expr("visit_count + ?", 1)).Error
 }

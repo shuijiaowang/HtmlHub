@@ -123,12 +123,14 @@ func (h *HTMLRecordApi) PublicHTML(c *gin.Context) {
 
 	if htmlRecordService.CanPublicAccess(record) {
 		renderHTML(c, record.HTMLContent, subdomain)
+		_ = htmlRecordService.IncrementVisitCount(record.ID)
 		return
 	}
 
 	userID := requestUserID(c)
 	if htmlRecordService.CanOwnerAccess(record, userID) {
 		renderHTML(c, record.HTMLContent, subdomain)
+		_ = htmlRecordService.IncrementVisitCount(record.ID)
 		return
 	}
 

@@ -6,6 +6,7 @@
           <h3>我的上传记录</h3>
           <button class="text-btn" @click="loadRecords">刷新</button>
         </div>
+        <p class="total-visits">总访问次数：{{ totalVisitCount }}</p>
         <p v-if="records.length === 0" class="empty">暂无记录</p>
         <div v-else class="record-list">
           <article v-for="item in records" :key="item.id" class="record-item">
@@ -21,6 +22,7 @@
             <div class="record-meta">
               <span>审核：{{ item.isApproved ? '已通过' : '未审核' }}</span>
               <span>可见性：{{ formatVisibility(item.visibility) }}</span>
+              <span>访问次数：{{ item.visitCount || 0 }}</span>
               <span>创建时间：{{ formatDate(item.createdAt) }}</span>
             </div>
             <div class="record-actions">
@@ -37,7 +39,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { deleteHtmlRecord, getMyHtmlList, updateHtmlVisibility } from '@/api/html'
 import { useUserStore } from '@/stores/user'
 
@@ -46,6 +48,10 @@ const htmlPublicHost = import.meta.env.VITE_HTML_PUBLIC_HOST || 'localhost:7789'
 
 const records = ref([])
 const userStore = useUserStore()
+
+const totalVisitCount = computed(() => {
+  return records.value.reduce((total, item) => total + (Number(item.visitCount) || 0), 0)
+})
 
 const loadRecords = async () => {
   const res = await getMyHtmlList()
@@ -129,6 +135,12 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.total-visits {
+  margin: 4px 0 14px;
+  color: #555;
+  font-size: 14px;
 }
 
 .record-list {

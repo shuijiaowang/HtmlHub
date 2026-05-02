@@ -133,6 +133,13 @@ func (s *HTMLRecordService) CanOwnerAccess(record *model.HtmlRecord, userID uint
 	return record != nil && userID > 0 && record.UserID == userID
 }
 
+func (s *HTMLRecordService) IncrementVisitCount(recordID uint) error {
+	if recordID == 0 {
+		return errors.New("记录ID无效")
+	}
+	return dao.IncrementHTMLRecordVisitCount(recordID)
+}
+
 func (s *HTMLRecordService) buildSubdomain(userID uint, prefix string) (string, error) {
 	prefix = strings.ToLower(strings.TrimSpace(prefix))
 	maxAttempts := 20

@@ -10,4 +10,5 @@ type HtmlRecord struct {
 	HTMLContent string `json:"htmlContent" gorm:"type:longtext;not null;comment:HTML文本内容"`
 	Visibility  string `json:"visibility" gorm:"type:varchar(20);not null;default:private;comment:可见性(public/private)"`
 	IsApproved  bool   `json:"isApproved" gorm:"not null;default:false;comment:是否审核通过"`
+	VisitCount  int64  `json:"visitCount" gorm:"not null;default:0;comment:访问次数"`
 }
