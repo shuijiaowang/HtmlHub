@@ -4,16 +4,20 @@
       <section class="card">
         <h3>上传 HTML</h3>
         <p class="tips">
-          使用提示：可填写页面前缀（可选），支持上传 html 文件或直接粘贴 html 文本；文件名会自动生成，无需手动输入。
+          使用提示：可填写子域名（可选），支持上传 html 文件或直接粘贴 html 文本。
         </p>
+        <p class="tips">
+          初始默认为私密，仅可自己访问。可到管理切换为公开。公开需等待管理员审核才能被真正公开！
+        </p>
+
         <form class="upload-form" @submit.prevent="submitUpload">
           <label>
-            页面前缀（可选）
-            <input v-model="uploadForm.subdomain" placeholder="例如：todo">
+            子域名（可选） 如todolist,会生成：todolist.htmlhub.lyyxy.top
+            <input v-model="uploadForm.subdomain" placeholder="例如：todolist">
           </label>
           <label>
-            简介
-            <input v-model="uploadForm.description" maxlength="500" placeholder="可选：写一点说明">
+            简介（可选）
+            <input v-model="uploadForm.description" maxlength="500" placeholder="写一点介绍">
           </label>
           <label>
             选择本地 HTML 文件（可选）

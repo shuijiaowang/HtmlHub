@@ -15,10 +15,10 @@
               <span>{{ formatSize(item.fileSize) }}</span>
             </div>
             <p class="record-route">
-              访问域名：{{ item.subdomain }}.{{ htmlPublicHost }}
-              <a class="share-link" :href="buildShareUrl(item)" target="_blank">打开分享链接</a>
+              访问链接：{{ item.subdomain }}.{{ htmlPublicHost }}
+              <a class="share-link" :href="buildShareUrl(item)" target="_blank">点击打开</a>
             </p>
-            <p class="record-desc">{{ item.description || '无简介' }}</p>
+            <p class="record-desc">{{ "简介："+item.description || '无简介' }}</p>
             <div class="record-meta">
               <span>审核：{{ formatApprovalStatus(item.approvalStatus) }}</span>
               <span>可见性：{{ formatVisibility(item.visibility) }}</span>
