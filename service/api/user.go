@@ -41,12 +41,14 @@ func (h *UserApi) Login(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Set("login_failed", true)
 		response.FailWithMessage("无效的请求格式", c)
 		return
 	}
 
 	user, ok := userService.Login(req.Email, req.Password)
 	if !ok {
+		c.Set("login_failed", true)
 		response.FailWithMessage("邮箱或密码错误", c)
 		return
 	}

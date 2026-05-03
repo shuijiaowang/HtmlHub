@@ -2,7 +2,7 @@ package main
 
 import (
 	"htmlhub/config"
-	cron "htmlhub/corn"
+	cron "htmlhub/cron"
 	"htmlhub/db"
 	"htmlhub/routes"
 	"log"
