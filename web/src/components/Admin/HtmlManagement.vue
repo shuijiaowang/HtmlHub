@@ -40,7 +40,7 @@
       <el-table-column prop="approvalStatus" label="审核状态" width="110">
         <template #default="{ row }">{{ formatApprovalStatus(row.approvalStatus) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="300" fixed="right">
+      <el-table-column label="操作" width="400" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="openDetail(row)">查看</el-button>
           <el-dropdown @command="(status) => updateApproval(row, status)">

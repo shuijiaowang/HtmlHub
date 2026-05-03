@@ -21,6 +21,10 @@ func (s *HTMLRecordDataService) SaveBySubdomain(userID uint, subdomain, dataJSON
 	if dataJSON == "" {
 		return errors.New("同步数据不能为空")
 	}
+	limits := getHTMLRecordLimits(userID)
+	if len([]byte(dataJSON)) > limits.MaxDataBytes {
+		return errors.New("同步数据不能超过100KB")
+	}
 
 	record, err := dao.FindHTMLRecordBySubdomain(subdomain)
 	if err != nil || record == nil || record.ID == 0 {

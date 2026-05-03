@@ -18,6 +18,18 @@ func ListHTMLRecordsByUserID(userID uint) ([]model.HtmlRecord, error) {
 	return records, err
 }
 
+func CountHTMLRecordsByUserID(userID uint) (int64, error) {
+	var count int64
+	err := db.DB.Model(&model.HtmlRecord{}).Where("user_id = ?", userID).Count(&count).Error
+	return count, err
+}
+
+func CountAllHTMLRecordsByUserID(userID uint) (int64, error) {
+	var count int64
+	err := db.DB.Unscoped().Model(&model.HtmlRecord{}).Where("user_id = ?", userID).Count(&count).Error
+	return count, err
+}
+
 func FindHTMLRecordBySubdomain(subdomain string) (*model.HtmlRecord, error) {
 	var record model.HtmlRecord
 	err := db.DB.Where("subdomain = ?", subdomain).First(&record).Error

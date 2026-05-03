@@ -23,6 +23,29 @@ const (
 	HTMLVisibilityPrivate = "private"
 )
 
+const (
+	defaultHTMLContentLimitBytes = 1 * 1024 * 1024
+	defaultHTMLDataLimitBytes    = 100 * 1024
+	defaultActiveUploadLimit     = 20
+	defaultTotalUploadLimit      = 100
+)
+
+type HTMLRecordLimits struct {
+	MaxHTMLContentBytes int
+	MaxDataBytes        int
+	MaxActiveUploads    int64
+	MaxTotalUploads     int64
+}
+
+func getHTMLRecordLimits(userID uint) HTMLRecordLimits {
+	return HTMLRecordLimits{
+		MaxHTMLContentBytes: defaultHTMLContentLimitBytes,
+		MaxDataBytes:        defaultHTMLDataLimitBytes,
+		MaxActiveUploads:    defaultActiveUploadLimit,
+		MaxTotalUploads:     defaultTotalUploadLimit,
+	}
+}
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
@@ -42,7 +65,25 @@ func (s *HTMLRecordService) Upload(userID uint, subdomain, fileName, description
 	if htmlContent == "" {
 		return "", errors.New("HTML内容不能为空")
 	}
-	subdomain, err := s.buildSubdomain(userID, subdomain)
+	limits := getHTMLRecordLimits(userID)
+	if len([]byte(htmlContent)) > limits.MaxHTMLContentBytes {
+		return "", errors.New("HTML内容不能超过1MB")
+	}
+	activeCount, err := dao.CountHTMLRecordsByUserID(userID)
+	if err != nil {
+		return "", err
+	}
+	if activeCount >= limits.MaxActiveUploads {
+		return "", errors.New("未删除上传数量已达20个，请删除后再上传")
+	}
+	totalCount, err := dao.CountAllHTMLRecordsByUserID(userID)
+	if err != nil {
+		return "", err
+	}
+	if totalCount >= limits.MaxTotalUploads {
+		return "", errors.New("累计上传数量已达100个，无法继续上传")
+	}
+	subdomain, err = s.buildSubdomain(userID, subdomain)
 	if err != nil {
 		return "", err
 	}
