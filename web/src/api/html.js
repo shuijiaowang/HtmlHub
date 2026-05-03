@@ -29,3 +29,19 @@ export const updateHtmlVisibility = (id, visibility) => {
     data: { visibility }
   })
 }
+
+export const updateHtmlDescription = (id, description) => {
+  return service({
+    url: `/html/${id}/description`,
+    method: 'put',
+    data: { description }
+  })
+}
+
+export const updateHtmlContent = (id, htmlContent) => {
+  return service({
+    url: `/html/${id}/content`,
+    method: 'put',
+    data: { htmlContent }
+  })
+}

@@ -62,8 +62,8 @@ func (s *HTMLRecordService) Upload(userID uint, subdomain, fileName, description
 	if fileName == "" {
 		return "", errors.New("文件名不能为空")
 	}
-	if htmlContent == "" {
-		return "", errors.New("HTML内容不能为空")
+	if err := validateFullHTMLStructure(htmlContent); err != nil {
+		return "", err
 	}
 	limits := getHTMLRecordLimits(userID)
 	if len([]byte(htmlContent)) > limits.MaxHTMLContentBytes {
@@ -130,6 +130,66 @@ func (s *HTMLRecordService) DeleteByUserID(userID, id uint) error {
 		return errors.New("记录不存在或无权操作")
 	}
 	return dao.SoftDeleteHTMLRecord(record)
+}
+
+func validateFullHTMLStructure(htmlContent string) error {
+	s := strings.TrimSpace(htmlContent)
+	if s == "" {
+		return errors.New("HTML内容不能为空")
+	}
+	lower := strings.ToLower(s)
+	if !strings.Contains(lower, "<html") || !strings.Contains(lower, "</html>") ||
+		!strings.Contains(lower, "<head") || !strings.Contains(lower, "</head>") ||
+		!strings.Contains(lower, "<body") || !strings.Contains(lower, "</body>") {
+		return errors.New("HTML必须为完整文档结构，需同时包含 <html>、<head>、<body> 及对应的闭合标签 </html>、</head>、</body>")
+	}
+	return nil
+}
+
+func (s *HTMLRecordService) UpdateDescriptionByUserID(userID, id uint, description string) (*model.HtmlRecord, error) {
+	if userID == 0 {
+		return nil, errors.New("用户信息无效")
+	}
+	if id == 0 {
+		return nil, errors.New("记录ID无效")
+	}
+	description = strings.TrimSpace(description)
+	record, err := dao.FindHTMLRecordByIDAndUserID(id, userID)
+	if err != nil {
+		return nil, errors.New("记录不存在或无权操作")
+	}
+	if err := dao.UpdateHTMLRecordDescription(record, description); err != nil {
+		return nil, err
+	}
+	record.Description = description
+	return record, nil
+}
+
+func (s *HTMLRecordService) UpdateHTMLContentByUserID(userID, id uint, htmlContent string) (*model.HtmlRecord, error) {
+	if userID == 0 {
+		return nil, errors.New("用户信息无效")
+	}
+	if id == 0 {
+		return nil, errors.New("记录ID无效")
+	}
+	htmlContent = strings.TrimSpace(htmlContent)
+	if err := validateFullHTMLStructure(htmlContent); err != nil {
+		return nil, err
+	}
+	limits := getHTMLRecordLimits(userID)
+	if len([]byte(htmlContent)) > limits.MaxHTMLContentBytes {
+		return nil, errors.New("HTML内容不能超过1MB")
+	}
+	record, err := dao.FindHTMLRecordByIDAndUserID(id, userID)
+	if err != nil {
+		return nil, errors.New("记录不存在或无权操作")
+	}
+	if err := dao.UpdateHTMLRecordContentAndResetApproval(record, htmlContent); err != nil {
+		return nil, err
+	}
+	record.HTMLContent = htmlContent
+	record.ApprovalStatus = model.HTMLApprovalPending
+	return record, nil
 }
 
 func (s *HTMLRecordService) UpdateVisibilityByUserID(userID, id uint, visibility string) (*model.HtmlRecord, error) {

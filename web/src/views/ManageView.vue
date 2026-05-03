@@ -26,6 +26,8 @@
               <span>创建时间：{{ formatDate(item.createdAt) }}</span>
             </div>
             <div class="record-actions">
+              <button class="text-btn" type="button" @click="openDescDialog(item)">编辑简介</button>
+              <button class="text-btn" type="button" @click="openHtmlDialog(item)">更新 HTML</button>
               <button class="text-btn" @click="toggleVisibility(item)">
                 切换为{{ item.visibility === 'public' ? '私密' : '公开' }}
               </button>
@@ -35,12 +37,35 @@
         </div>
       </section>
     </main>
+
+    <el-dialog v-model="descDialogVisible" title="编辑简介" width="520px" destroy-on-close @closed="editingRecord = null">
+      <el-input v-model="descDraft" type="textarea" :rows="4" maxlength="500" show-word-limit placeholder="简介（选填）" />
+      <template #footer>
+        <el-button @click="descDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="descSaving" @click="saveDescription">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="htmlDialogVisible" title="更新 HTML" width="720px" destroy-on-close @closed="editingRecord = null">
+      <p class="dialog-hint">保存后仅替换 HTML 正文，审核状态将重置为「未审核」。须为完整文档（含 &lt;html&gt;、&lt;head&gt;、&lt;body&gt; 及闭合标签）。</p>
+      <el-input v-model="htmlDraft" type="textarea" :rows="16" placeholder="粘贴完整 HTML" />
+      <template #footer>
+        <el-button @click="htmlDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="htmlSaving" @click="saveHtmlContent">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { deleteHtmlRecord, getMyHtmlList, updateHtmlVisibility } from '@/api/html'
+import {
+  deleteHtmlRecord,
+  getMyHtmlList,
+  updateHtmlContent,
+  updateHtmlDescription,
+  updateHtmlVisibility
+} from '@/api/html'
 import { useUserStore } from '@/stores/user'
 
 /** 子域名 HTML 访问用 host，本地与线上由 Vite 环境变量区分 */
@@ -48,6 +73,55 @@ const htmlPublicHost = import.meta.env.VITE_HTML_PUBLIC_HOST || 'localhost:7789'
 
 const records = ref([])
 const userStore = useUserStore()
+
+const descDialogVisible = ref(false)
+const htmlDialogVisible = ref(false)
+const editingRecord = ref(null)
+const descDraft = ref('')
+const htmlDraft = ref('')
+const descSaving = ref(false)
+const htmlSaving = ref(false)
+
+const openDescDialog = (item) => {
+  editingRecord.value = item
+  descDraft.value = item.description || ''
+  descDialogVisible.value = true
+}
+
+const openHtmlDialog = (item) => {
+  editingRecord.value = item
+  htmlDraft.value = item.htmlContent || ''
+  htmlDialogVisible.value = true
+}
+
+const saveDescription = async () => {
+  const item = editingRecord.value
+  if (!item?.id) return
+  descSaving.value = true
+  try {
+    const res = await updateHtmlDescription(item.id, descDraft.value)
+    const next = res.data?.description
+    if (next !== undefined) item.description = next
+    else item.description = descDraft.value
+    descDialogVisible.value = false
+  } finally {
+    descSaving.value = false
+  }
+}
+
+const saveHtmlContent = async () => {
+  const item = editingRecord.value
+  if (!item?.id) return
+  htmlSaving.value = true
+  try {
+    const res = await updateHtmlContent(item.id, htmlDraft.value)
+    if (res.data?.htmlContent !== undefined) item.htmlContent = res.data.htmlContent
+    if (res.data?.approvalStatus !== undefined) item.approvalStatus = res.data.approvalStatus
+    htmlDialogVisible.value = false
+  } finally {
+    htmlSaving.value = false
+  }
+}
 
 const totalVisitCount = computed(() => {
   return records.value.reduce((total, item) => total + (Number(item.visitCount) || 0), 0)
@@ -203,5 +277,12 @@ onMounted(async () => {
 
 .empty {
   color: #888;
+}
+
+.dialog-hint {
+  margin: 0 0 12px;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.5;
 }
 </style>

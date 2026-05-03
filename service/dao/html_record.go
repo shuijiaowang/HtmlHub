@@ -64,6 +64,17 @@ func UpdateHTMLRecordSubdomain(record *model.HtmlRecord, subdomain string) error
 	return db.DB.Model(record).Update("subdomain", subdomain).Error
 }
 
+func UpdateHTMLRecordDescription(record *model.HtmlRecord, description string) error {
+	return db.DB.Model(record).Update("description", description).Error
+}
+
+func UpdateHTMLRecordContentAndResetApproval(record *model.HtmlRecord, htmlContent string) error {
+	return db.DB.Model(record).Updates(map[string]interface{}{
+		"html_content":    htmlContent,
+		"approval_status": model.HTMLApprovalPending,
+	}).Error
+}
+
 func IncrementHTMLRecordVisitCount(id uint) error {
 	return db.DB.Model(&model.HtmlRecord{}).Where("id = ?", id).Update("visit_count", gorm.Expr("visit_count + ?", 1)).Error
 }

@@ -114,6 +114,66 @@ func (h *HTMLRecordApi) UpdateVisibility(c *gin.Context) {
 	response.OkWithData(record, c)
 }
 
+func (h *HTMLRecordApi) UpdateDescription(c *gin.Context) {
+	userInfo := util.GetUserInfo(c)
+	if userInfo == nil || userInfo.ID <= 0 {
+		response.FailWithMessage("未获取到用户信息", c)
+		return
+	}
+
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.FailWithMessage("记录ID无效", c)
+		return
+	}
+
+	var req struct {
+		Description string `json:"description" binding:"max=500"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage("简介参数错误", c)
+		return
+	}
+
+	record, err := htmlRecordService.UpdateDescriptionByUserID(uint(userInfo.ID), uint(id), req.Description)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithData(record, c)
+}
+
+func (h *HTMLRecordApi) UpdateHTMLContent(c *gin.Context) {
+	userInfo := util.GetUserInfo(c)
+	if userInfo == nil || userInfo.ID <= 0 {
+		response.FailWithMessage("未获取到用户信息", c)
+		return
+	}
+
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.FailWithMessage("记录ID无效", c)
+		return
+	}
+
+	var req struct {
+		HTMLContent string `json:"htmlContent" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage("请提供 HTML 内容", c)
+		return
+	}
+
+	record, err := htmlRecordService.UpdateHTMLContentByUserID(uint(userInfo.ID), uint(id), req.HTMLContent)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithData(record, c)
+}
+
 func (h *HTMLRecordApi) AdminList(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
