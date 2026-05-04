@@ -1,14 +1,14 @@
 package api
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"htmlhub/config"
 	"htmlhub/dao"
+	"htmlhub/script"
 	"htmlhub/util"
 	"htmlhub/util/response"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 
@@ -368,18 +368,10 @@ func portalHomeURL() string {
 }
 
 func injectSyncScript(htmlContent, subdomain, registerURL string) string {
-	_, currentFile, _, ok := runtime.Caller(0)
-	if !ok {
-		return htmlContent
+	scriptBody, loaded := loadSyncScriptBody(subdomain, registerURL)
+	if !loaded {
+		scriptBody = buildFallbackDebugScript(subdomain)
 	}
-	scriptPath := filepath.Join(filepath.Dir(currentFile), "..", "script", "sync_helper.js")
-	content, err := os.ReadFile(scriptPath)
-	if err != nil {
-		return htmlContent
-	}
-
-	scriptBody := strings.ReplaceAll(string(content), "__SUBDOMAIN__", strconv.Quote(subdomain))
-	scriptBody = strings.ReplaceAll(scriptBody, "__REGISTER_URL__", strconv.Quote(registerURL))
 	script := "<script>\n" + scriptBody + "\n</script>"
 
 	lower := strings.ToLower(htmlContent)
@@ -388,6 +380,29 @@ func injectSyncScript(htmlContent, subdomain, registerURL string) string {
 		return htmlContent[:idx] + script + htmlContent[idx:]
 	}
 	return htmlContent + script
+}
+
+func loadSyncScriptBody(subdomain, registerURL string) (string, bool) {
+	embedded := strings.TrimSpace(script.SyncHelperJS())
+	if embedded == "" {
+		return "", false
+	}
+	scriptBody := strings.ReplaceAll(embedded, "__SUBDOMAIN__", strconv.Quote(subdomain))
+	scriptBody = strings.ReplaceAll(scriptBody, "__REGISTER_URL__", strconv.Quote(registerURL))
+	return scriptBody, true
+}
+
+func buildFallbackDebugScript(subdomain string) string {
+	buf := make([]byte, 6)
+	if _, err := rand.Read(buf); err != nil {
+		copy(buf, []byte("debug0"))
+	}
+	token := hex.EncodeToString(buf)
+	return fmt.Sprintf(
+		"console.log('[HtmlHub fallback sync] token=%s subdomain=%s host=' + location.host + ' path=' + location.pathname);",
+		token,
+		subdomain,
+	)
 }
 
 func accessCheckHTML(homeURL string) string {
