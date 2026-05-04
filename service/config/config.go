@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	mapstructure "github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/viper"
 )
 
@@ -65,7 +66,10 @@ func InitConfig() {
 
 	AppConfig = &Config{}
 
-	if err := viper.Unmarshal(AppConfig); err != nil {
+	// Viper 使用 mapstructure 解码，默认只认 mapstructure 标签；本项目字段用的是 yaml 标签。
+	if err := viper.Unmarshal(AppConfig, func(c *mapstructure.DecoderConfig) {
+		c.TagName = "yaml"
+	}); err != nil {
 		log.Fatalf("Unable to decode into struct:%v", err)
 	}
 }

@@ -17,5 +17,5 @@ jwt:
 # portal_origin：控制台（Vue）根地址，建议用三级子域，例如 https://htmlhub.lyyxy.top
 # html_public_host：用户页面 host 后缀，四级域名为 {slug}.html_public_host
 app:
-  portal_origin: "http://localhost:5173"
+  portal_origin: " http://localhost:7788/"
   html_public_host: "htmlhub.lyyxy.top"
