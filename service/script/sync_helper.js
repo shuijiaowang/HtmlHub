@@ -2,6 +2,7 @@
 (function () {
   const SUBDOMAIN = __SUBDOMAIN__;
   const TOKEN_KEY = "htmlhub_sync_token";
+  const PANEL_MINIMIZED_KEY = "htmlhub_sync_panel_minimized";
   const REGISTER_URL = __REGISTER_URL__;
   const LOGIN_API = "/api/user/login";
   const SAVE_API = "/api/html/data/save";
@@ -131,18 +132,23 @@
     updateStatus();
   }
 
+  // 支持最小化，避免遮挡页面内容；状态持久化见 PANEL_MINIMIZED_KEY。
+  let minimized = localStorage.getItem(PANEL_MINIMIZED_KEY) === "1";
   const host = document.createElement("div");
-  host.style.cssText = "position:fixed;right:16px;bottom:16px;z-index:2147483647;";
+  host.style.cssText = minimized
+    ? "position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:2147483647;"
+    : "position:fixed;right:16px;bottom:16px;z-index:2147483647;";
   document.body.appendChild(host);
   const shadow = host.attachShadow({ mode: "open" });
-
-  // 支持最小化，避免遮挡页面内容。
-  let minimized = false;
 
   shadow.innerHTML =
     "" +
     "<style>" +
-    ".htmlhub-sync-panel{width:320px;background:#fff;border:1px solid #dcdfe6;border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.15);font-size:14px;color:#333;padding:12px;font-family:Arial,sans-serif;}" +
+    ".htmlhub-sync-panel{width:320px;background:#fff;border:1px solid #dcdfe6;border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.15);font-size:14px;color:#333;padding:12px;font-family:Arial,sans-serif;box-sizing:border-box;}" +
+    ".htmlhub-sync-panel--minimized{width:26px;height:52px;padding:0;border-radius:26px 0 0 26px;border-right:none;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;}" +
+    ".htmlhub-sync-panel--minimized .htmlhub-sync-header{margin:0;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:0;}" +
+    ".htmlhub-sync-panel--minimized .htmlhub-sync-title{display:none;}" +
+    ".htmlhub-sync-panel--minimized .htmlhub-sync-mini{border:none;background:transparent;padding:0;width:100%;flex:1;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;-webkit-text-fill-color:#222;}" +
     ".htmlhub-sync-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}" +
     ".htmlhub-sync-title{font-weight:600;color:#222;font-size:15px;}" +
     ".htmlhub-sync-status{margin-bottom:8px;color:#666;font-size:13px;}" +
@@ -157,9 +163,14 @@
     '<div id="htmlhub-sync-content">' +
     '<div id="htmlhub-sync-status" class="htmlhub-sync-status">状态：未登录</div>' +
     '<div class="htmlhub-sync-actions">' +
-    '<button class="htmlhub-sync-btn" id="h-login">登录</button><button class="htmlhub-sync-btn" id="h-register">注册</button><button class="htmlhub-sync-btn" id="h-logout">退出</button>' +
-    '<button class="htmlhub-sync-btn" id="h-export">导出</button><button class="htmlhub-sync-btn" id="h-import">导入</button><button class="htmlhub-sync-btn" id="h-clear">清空</button>' +
-    '<button class="htmlhub-sync-btn" id="h-upload">上传</button><button class="htmlhub-sync-btn" id="h-load">加载</button>' +
+    '<button class="htmlhub-sync-btn" id="h-login" title="登录账号，用于云端数据同步">登录</button>'+
+    '<button class="htmlhub-sync-btn" id="h-register" title="跳转到注册页面创建账号">注册</button>'+
+    '<button class="htmlhub-sync-btn" id="h-logout" title="退出当前登录的账号">退出</button>'+
+    '<button class="htmlhub-sync-btn" id="h-export" title="导出本地所有数据到JSON文件">导出</button>'+
+    '<button class="htmlhub-sync-btn" id="h-import" title="从本地文件导入数据，会覆盖现有全部数据">导入</button>'+
+    '<button class="htmlhub-sync-btn" id="h-clear" title="清空当前页面的所有本地存储数据">清空</button>'+
+    '<button class="htmlhub-sync-btn" id="h-upload" title="将本地数据同步上传到云端存储">上传</button>'+
+    '<button class="htmlhub-sync-btn" id="h-load" title="从云端加载数据，会覆盖本地全部数据">加载</button>'+
     "</div></div></div>";
 
   function getEl(id) {
@@ -174,13 +185,30 @@
   function updatePanelVisibility() {
     const content = getEl("htmlhub-sync-content");
     const toggle = getEl("h-toggle");
-    if (!content || !toggle) return;
+    const panel = shadow.querySelector(".htmlhub-sync-panel");
+    if (!content || !toggle || !panel) return;
     content.classList.toggle("htmlhub-sync-hidden", minimized);
-    toggle.textContent = minimized ? "展开" : "最小化";
+    toggle.textContent = minimized ? "\u2039" : "最小化";
+    if (minimized) {
+      toggle.setAttribute("title", "展开");
+      toggle.setAttribute("aria-label", "展开同步助手");
+    } else {
+      toggle.removeAttribute("title");
+      toggle.removeAttribute("aria-label");
+    }
+    panel.classList.toggle("htmlhub-sync-panel--minimized", minimized);
+    if (minimized) {
+      host.style.cssText =
+        "position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:2147483647;";
+    } else {
+      host.style.cssText =
+        "position:fixed;right:16px;bottom:16px;top:auto;transform:none;z-index:2147483647;";
+    }
   }
 
   getEl("h-toggle").onclick = function () {
     minimized = !minimized;
+    localStorage.setItem(PANEL_MINIMIZED_KEY, minimized ? "1" : "0");
     updatePanelVisibility();
   };
   getEl("h-login").onclick = doLogin;
