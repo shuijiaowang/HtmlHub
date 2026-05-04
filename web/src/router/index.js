@@ -10,7 +10,7 @@ const router = createRouter({
     routes: [
         {
             path: '/',
-            redirect: '/login'  // 默认重定向到登录页
+            redirect: '/home'  // 默认重定向到主页
         },
         {
             path: '/login',
@@ -28,7 +28,7 @@ const router = createRouter({
             path: '/home',
             name: 'home',
             component: () => import('../views/HomeView.vue'),
-            meta: { requiresAuth: true, title: '主页' }
+            meta: { title: '主页' }
         },
         {
             path: '/home/upload',
@@ -46,7 +46,7 @@ const router = createRouter({
             path: '/home/showcase',
             name: 'home-showcase',
             component: () => import('../views/ShowcaseView.vue'),
-            meta: { requiresAuth: true, title: '展示页' }
+            meta: { title: '展示页' }
         },
         {
             path: '/admin',
