@@ -1,7 +1,10 @@
 /* Design tokens (light first). */
 :root {
-  --hh-brand: #10b981;
-  --hh-brand-2: #3b82f6;
+  /* Sky-blue theme */
+  --hh-brand: #0ea5e9;
+  --hh-brand-2: #38bdf8;
+  --hh-brand-rgb: 14 165 233;
+  --hh-brand-2-rgb: 56 189 248;
   --hh-danger: #ef4444;
 
   --hh-bg: #f6f7fb;
@@ -22,7 +25,7 @@
   --hh-radius-sm: 10px;
   --hh-radius-md: 14px;
 
-  --hh-focus: 0 0 0 3px rgba(16, 185, 129, 0.22);
+  --hh-focus: 0 0 0 3px rgb(var(--hh-brand-rgb) / 0.22);
 
   /* Backwards-compat with existing code */
   --color-background: var(--hh-bg);
@@ -50,7 +53,7 @@
 
     --hh-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
     --hh-shadow-md: 0 14px 30px rgba(0, 0, 0, 0.35);
-    --hh-focus: 0 0 0 3px rgba(16, 185, 129, 0.28);
+    --hh-focus: 0 0 0 3px rgb(var(--hh-brand-rgb) / 0.28);
 
     --color-background: var(--hh-bg);
     --color-background-soft: var(--hh-bg-soft);
@@ -74,8 +77,8 @@ body {
   min-height: 100vh;
   color: var(--hh-text);
   background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(16, 185, 129, 0.16), transparent 55%),
-    radial-gradient(1200px 600px at 90% -20%, rgba(59, 130, 246, 0.14), transparent 52%),
+    radial-gradient(1200px 600px at 10% -10%, rgb(var(--hh-brand-rgb) / 0.14), transparent 55%),
+    radial-gradient(1200px 600px at 90% -20%, rgb(var(--hh-brand-2-rgb) / 0.16), transparent 52%),
     var(--hh-bg);
   transition: color 0.25s ease, background-color 0.25s ease;
   line-height: 1.65;
@@ -99,5 +102,5 @@ body {
 }
 
 ::selection {
-  background: rgba(16, 185, 129, 0.22);
+  background: rgb(var(--hh-brand-rgb) / 0.22);
 }

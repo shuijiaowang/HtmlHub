@@ -2,37 +2,47 @@
   <div class="home-page">
     <main class="content">
       <section class="card">
-        <h3>上传 HTML</h3>
-        <p class="tips">
-          使用提示：可填写子域名（可选），支持上传 html 文件或直接粘贴 html 文本。
-        </p>
-        <p class="tips">
-          初始默认为私密，仅可自己访问。可到管理切换为公开。公开需等待管理员审核才能被真正公开！
-        </p>
+        <div class="head">
+          <div>
+            <h3 class="title">上传 HTML</h3>
+            <p class="tips">可填写子域名（可选），支持上传 html 文件或直接粘贴 html 文本。</p>
+<!--            <p class="tips">初始默认为私密，仅可自己访问；到“管理”可切换为公开（公开需等待管理员审核）。</p>-->
+          </div>
+          <div class="badge" aria-label="上传提示">建议：优先上传完整 HTML 文档</div>
+        </div>
 
         <form class="upload-form" @submit.prevent="submitUpload">
-          <label>
-            子域名（可选） 如todolist,会生成：todolist.htmlhub.lyyxy.top
-            <input v-model="uploadForm.subdomain" placeholder="例如：todolist">
-          </label>
-          <label>
-            简介（可选）
-            <input v-model="uploadForm.description" maxlength="500" placeholder="写一点介绍">
-          </label>
-          <label>
-            选择本地 HTML 文件（可选）
-            <input type="file" accept=".html,text/html" @change="onSelectFile">
-          </label>
-          <label>
-            HTML 文本
-            <textarea
-              v-model="uploadForm.htmlContent"
-              rows="10"
-              placeholder="<html>...</html>"
-              required
-            />
-          </label>
-          <button class="primary-btn" type="submit">上传</button>
+          <div class="form-grid">
+            <div class="left">
+              <label class="field">
+                <span class="label">子域名（可选）</span>
+                <span class="hint">如 `todolist`，会生成：todolist.{{ htmlPublicHost }}</span>
+                <input v-model="uploadForm.subdomain" placeholder="例如：todolist" inputmode="url" autocomplete="off">
+              </label>
+              <label class="field">
+                <span class="label">简介（可选）</span>
+                <input v-model="uploadForm.description" maxlength="500" placeholder="写一点介绍（方便后续管理）">
+              </label>
+              <label class="field">
+                <span class="label">选择本地 HTML 文件（可选）</span>
+                <input class="file" type="file" accept=".html,text/html" @change="onSelectFile">
+              </label>
+              <div class="actions">
+                <button class="primary-btn" type="submit">上传</button>
+                <span class="mini">上传后可在“管理”里编辑简介、更新 HTML、切换公开/私密。</span>
+              </div>
+            </div>
+
+            <label class="field right">
+              <span class="label">HTML 文本</span>
+              <textarea
+                v-model="uploadForm.htmlContent"
+                rows="14"
+                placeholder="粘贴完整 HTML（含 <html>、<head>、<body> 及闭合标签）"
+                required
+              />
+            </label>
+          </div>
         </form>
       </section>
     </main>
@@ -44,6 +54,9 @@ import { onMounted, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { uploadHtml } from '@/api/html'
 import { useUserStore } from '@/stores/user'
+
+/** 子域名 HTML 访问用 host，本地与线上由 Vite 环境变量区分 */
+const htmlPublicHost = import.meta.env.VITE_HTML_PUBLIC_HOST || 'localhost:7789'
 
 const uploadForm = reactive({
   subdomain: '',
@@ -116,47 +129,109 @@ const submitUpload = async () => {
 
 .content {
   padding: 32px 24px;
-  max-width: 980px;
+  max-width: 1040px;
   margin: 0 auto;
 }
 
 .card {
   background: var(--hh-surface-solid);
   border: 1px solid var(--hh-border);
-  border-radius: 12px;
-  padding: 18px;
+  border-radius: var(--hh-radius-md);
+  padding: 18px 18px 16px;
   margin-bottom: 18px;
-  box-shadow: var(--hh-shadow-sm);
+  box-shadow: var(--hh-shadow-md);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  letter-spacing: -0.02em;
 }
 
 .tips {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   color: var(--hh-text-2);
   font-size: 14px;
 }
 
-.upload-form {
-  display: grid;
-  gap: 12px;
+.badge {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--hh-brand-rgb) / 0.18);
+  background: rgb(var(--hh-brand-rgb) / 0.08);
+  color: color-mix(in srgb, var(--hh-brand) 82%, var(--hh-text) 18%);
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.upload-form label {
+.upload-form {
+  display: grid;
+  gap: 10px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 14px;
+}
+
+.left {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.field {
   display: grid;
   gap: 6px;
   color: var(--hh-text);
 }
 
+.label {
+  font-weight: 650;
+  font-size: 13px;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--hh-text-3);
+}
+
 .upload-form input,
-.upload-form textarea {
+.upload-form textarea,
+.upload-form .file {
   width: 100%;
   border: 1px solid var(--hh-border-2);
-  border-radius: 10px;
+  border-radius: var(--hh-radius-sm);
   padding: 10px 12px;
   background: color-mix(in srgb, var(--hh-surface-solid) 94%, #000 0%);
 }
 
 .upload-form textarea {
   resize: vertical;
+  min-height: 320px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mini {
+  font-size: 12px;
+  color: var(--hh-text-3);
 }
 
 .primary-btn {
@@ -167,7 +242,7 @@ const submitUpload = async () => {
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  box-shadow: var(--hh-shadow-sm);
+  box-shadow: 0 10px 22px rgb(var(--hh-brand-rgb) / 0.18);
 }
 
 .primary-btn:hover {
@@ -177,6 +252,23 @@ const submitUpload = async () => {
 @media (max-width: 640px) {
   .content {
     padding: 18px 12px;
+  }
+
+  .head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .badge {
+    width: fit-content;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-form textarea {
+    min-height: 240px;
   }
 }
 </style>

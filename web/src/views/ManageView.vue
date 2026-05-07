@@ -3,10 +3,22 @@
     <main class="content">
       <section class="card">
         <div class="records-title-row">
-          <h3>我的上传记录</h3>
-          <button class="text-btn" @click="loadRecords">刷新</button>
+          <div class="title-wrap">
+            <h3 class="title">我的上传记录</h3>
+            <p class="subtitle">管理你的 HTML：编辑简介、更新内容、切换可见性、查看访问统计。</p>
+          </div>
+          <button class="text-btn refresh" @click="loadRecords">刷新</button>
         </div>
-        <p class="total-visits">总访问次数：{{ totalVisitCount }}</p>
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-label">总访问次数</div>
+            <div class="stat-value">{{ totalVisitCount }}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">记录数</div>
+            <div class="stat-value">{{ records.length }}</div>
+          </div>
+        </div>
         <p v-if="records.length === 0" class="empty">暂无记录</p>
         <div v-else class="record-list">
           <article v-for="item in records" :key="item.id" class="record-item">
@@ -18,7 +30,7 @@
               访问链接：{{ item.subdomain }}.{{ htmlPublicHost }}
               <a class="share-link" :href="buildShareUrl(item)" target="_blank">点击打开</a>
             </p>
-            <p class="record-desc">{{ "简介："+item.description || '无简介' }}</p>
+            <p class="record-desc">{{ item.description ? `简介：${item.description}` : '简介：无简介' }}</p>
             <div class="record-meta">
               <span>审核：{{ formatApprovalStatus(item.approvalStatus) }}</span>
               <span>可见性：{{ formatVisibility(item.visibility) }}</span>
@@ -208,81 +220,168 @@ onMounted(async () => {
 
 .content {
   padding: 32px 24px;
-  max-width: 980px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
 .card {
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 18px;
+  background: var(--hh-surface-solid);
+  border: 1px solid var(--hh-border);
+  border-radius: var(--hh-radius-md);
+  padding: 18px 18px 14px;
   margin-bottom: 18px;
+  box-shadow: var(--hh-shadow-md);
 }
 
 .text-btn {
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
-  color: hsla(160, 100%, 37%, 1);
+  color: color-mix(in srgb, var(--hh-brand) 86%, #000 0%);
   cursor: pointer;
   font-size: 14px;
+  padding: 6px 7px;
+  border-radius: 8px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+}
+
+.text-btn:hover {
+  background: rgb(var(--hh-brand-rgb) / 0.10);
+  border-color: rgb(var(--hh-brand-rgb) / 0.18);
+  text-decoration: none;
+}
+
+.text-btn:active {
+  transform: translateY(1px);
+}
+
+.refresh {
+  white-space: nowrap;
 }
 
 .records-title-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.total-visits {
-  margin: 4px 0 14px;
-  color: #555;
-  font-size: 14px;
+.title-wrap {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  color: var(--hh-text-3);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 16px;
+}
+
+.stat {
+  border: 1px solid var(--hh-border);
+  border-radius: var(--hh-radius-md);
+  padding: 12px 12px;
+  background: color-mix(in srgb, var(--hh-surface-solid) 92%, rgb(var(--hh-brand-rgb) / 0.06) 8%);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--hh-text-3);
+}
+
+.stat-value {
+  margin-top: 2px;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.02em;
 }
 
 .record-list {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .record-item {
-  border: 1px solid #edf0f2;
-  border-radius: 8px;
-  padding: 12px;
-  background: #fafbfc;
+  border: 1px solid var(--hh-border);
+  border-radius: var(--hh-radius-md);
+  padding: 14px 14px 12px;
+  background: color-mix(in srgb, var(--hh-surface-solid) 94%, #000 0%);
+  box-shadow: var(--hh-shadow-sm);
+  transition: transform 0.10s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.record-item:hover {
+  transform: translateY(-1px);
+  border-color: rgb(var(--hh-brand-rgb) / 0.22);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
 }
 
 .record-head {
   display: flex;
   justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.record-head strong {
+  font-size: 15px;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.record-head span {
+  color: var(--hh-text-3);
+  font-size: 12px;
+  flex: 0 0 auto;
 }
 
 .record-desc {
-  margin: 8px 0;
-  color: #555;
+  margin: 10px 0 0;
+  color: var(--hh-text-2);
+  font-size: 13px;
+  line-height: 1.6;
+  word-break: break-word;
 }
 
 .record-route {
   margin: 8px 0 0;
-  color: #666;
-  font-size: 14px;
+  color: var(--hh-text-2);
+  font-size: 13px;
+  word-break: break-word;
 }
 
 .share-link {
   margin-left: 10px;
+  font-weight: 650;
 }
 
 .record-meta {
   display: flex;
-  gap: 16px;
-  color: #888;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-top: 10px;
+  color: var(--hh-text-3);
   font-size: 13px;
 }
 
 .record-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .danger-btn {
@@ -290,13 +389,30 @@ onMounted(async () => {
 }
 
 .empty {
-  color: #888;
+  color: var(--hh-text-3);
+  padding: 14px 0 6px;
 }
 
 .dialog-hint {
   margin: 0 0 12px;
-  color: #666;
+  color: var(--hh-text-2);
   font-size: 13px;
   line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .record-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .content {
+    padding: 18px 12px;
+  }
+
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

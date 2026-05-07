@@ -22,11 +22,12 @@
 }
 
 .card {
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  background: var(--hh-surface-solid);
+  border: 1px solid var(--hh-border);
+  border-radius: var(--hh-radius-md);
   padding: 18px;
   margin-bottom: 18px;
+  box-shadow: var(--hh-shadow-md);
 }
 
 .subtitle {

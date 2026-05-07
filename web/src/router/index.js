@@ -11,18 +11,6 @@ const router = createRouter({
             redirect: '/home'  // 默认重定向到主页
         },
         {
-            path: '/login',
-            name: 'login',
-            redirect: '/home?auth=login',
-            meta: { title: '登录' }
-        },
-        {
-            path: '/register',
-            name: 'register',
-            redirect: '/home?auth=register',
-            meta: { title: '注册' }
-        },
-        {
             path: '/home',
             name: 'home',
             component: () => import('../views/HomeView.vue'),

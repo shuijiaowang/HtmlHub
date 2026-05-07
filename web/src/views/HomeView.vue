@@ -3,8 +3,8 @@
     <main class="content">
       <!-- 平台头部介绍 -->
       <section class="card hero-card">
-        <h1>HtmlHub - 轻量在线 HTML 托管平台</h1>
-        <p class="subtitle">一键上传 HTML 文件，分配子域名，轻松托管你的静态页面</p>
+        <h1>HtmlHub</h1>
+        <p class="subtitle">一键上传 HTML，分配子域名，轻松托管静态页面</p>
         <div class="hero-tags">
           <span>零部署</span>
           <span>多设备存储同步</span>
@@ -15,30 +15,30 @@
 
       <!-- 核心功能 -->
       <section class="card">
-        <h2>🔥 核心功能</h2>
+        <h2>核心功能</h2>
         <div class="feature-grid">
           <div class="feature-item">
-            <h4>📤 简单上传</h4>
+            <h4>简单上传</h4>
             <p>支持上传 HTML 文件 / 直接粘贴代码，无需复杂配置</p>
           </div>
           <div class="feature-item">
-            <h4>🌐 自定义子域名</h4>
+            <h4>自定义子域名</h4>
             <p>自定义子域名，自动分配唯一域名，专属访问链接，方便分享</p>
           </div>
           <div class="feature-item">
-            <h4>💾 本地存储同步</h4>
+            <h4>本地存储同步</h4>
             <p>内置 localStorage 云端同步脚本，支持数据导出/导入/上传/加载</p>
           </div>
           <div class="feature-item">
-            <h4>🔒 权限控制</h4>
+            <h4>权限控制</h4>
             <p>页面支持私密/公开切换，未公开页面仅自己可访问，保护隐私</p>
           </div>
           <div class="feature-item">
-            <h4>📊 数据统计</h4>
+            <h4>数据统计</h4>
             <p>统计页面访问次数，清晰掌握页面使用情况</p>
           </div>
           <div class="feature-item">
-            <h4>⚙️ 完整管理</h4>
+            <h4>完整管理</h4>
             <p>管理所有页面，支持编辑、更新、删除、修改描述等操作</p>
           </div>
         </div>
@@ -46,7 +46,7 @@
 
       <!-- 快速上手教程 -->
       <section class="card">
-        <h2>📖 快速上手教程</h2>
+        <h2>快速上手</h2>
         <div class="guide-steps">
           <div class="step">
             <span class="step-num">1</span>
@@ -74,7 +74,7 @@
 
       <!-- AI 创作提示 -->
       <section class="card">
-        <h2>🤖 AI 快速生成页面</h2>
+        <h2>AI 快速生成页面</h2>
         <p class="tips-title">复制下方提示词，直接发给 AI，一键生成可托管的完整 HTML 页面：</p>
         <div class="code-block">
           请用html+css+js+local存储生成一个完整的html页面，需求是：...
@@ -84,7 +84,7 @@
 
       <!-- 联系与支持 -->
       <section class="card">
-        <h2>📞 联系站长</h2>
+        <h2>联系站长</h2>
         <p class="platform-desc">
           本网站主要为非程序员打造，不用自己部署服务器、无需搭建数据库，解决纯静态网页无法数据同步、无法分享页面的问题，平台目前尚处于开发阶段，请注意备份自己的数据。<br>
           ✅ 如需纯净子域名、修改使用上限，可联系站长；<br>
@@ -112,11 +112,14 @@
 <style scoped>
 .home-page {
   min-height: 100vh;
-  background: var(--color-background);
+  background:
+    radial-gradient(900px 420px at 20% -10%, rgb(var(--hh-brand-rgb) / 0.12), transparent 60%),
+    radial-gradient(900px 420px at 100% 0%, rgb(var(--hh-brand-2-rgb) / 0.10), transparent 55%),
+    var(--color-background);
 }
 
 .content {
-  padding: 32px 24px;
+  padding: 36px 24px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -125,8 +128,8 @@
 .card {
   background: var(--hh-surface-solid);
   border: 1px solid var(--hh-border);
-  border-radius: 12px;
-  padding: 24px;
+  border-radius: 16px;
+  padding: 26px;
   margin-bottom: 24px;
   box-shadow: var(--hh-shadow-md);
 }
@@ -134,19 +137,23 @@
 /* 头部英雄区 */
 .hero-card {
   text-align: center;
-  padding: 40px 24px;
-  background: linear-gradient(135deg, #f8fffb 0%, #f2f6ff 100%);
+  padding: 44px 24px;
+  background:
+    radial-gradient(650px 280px at 20% 10%, rgb(var(--hh-brand-rgb) / 0.16), transparent 55%),
+    radial-gradient(650px 280px at 90% 0%, rgb(var(--hh-brand-2-rgb) / 0.14), transparent 55%),
+    linear-gradient(135deg, #f7fbff 0%, #f3f8ff 100%);
 }
 
 .hero-card h1 {
-  font-size: 32px;
-  font-weight: 700;
+  font-size: clamp(28px, 4.2vw, 40px);
+  font-weight: 850;
   color: var(--color-heading);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  letter-spacing: -0.3px;
 }
 
 .subtitle {
-  font-size: 16px;
+  font-size: 15px;
   color: var(--hh-text-2);
   margin-bottom: 20px;
 }
@@ -159,40 +166,46 @@
 }
 
 .hero-tags span {
-  padding: 6px 16px;
-  background: hsla(160, 100%, 37%, 0.1);
-  color: hsla(160, 100%, 37%, 1);
+  padding: 7px 14px;
+  background: rgb(var(--hh-brand-rgb) / 0.10);
+  color: color-mix(in srgb, var(--hh-brand) 88%, #000 0%);
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 13px;
+  border: 1px solid rgb(var(--hh-brand-rgb) / 0.16);
 }
 
 /* 标题统一样式 */
 .card h2 {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 800;
   color: var(--color-heading);
   margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid hsla(160, 100%, 37%, 0.2);
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgb(var(--hh-brand-rgb) / 0.18);
+  letter-spacing: -0.2px;
 }
 
 /* 功能网格 */
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(12, 1fr);
   gap: 20px;
 }
 
 .feature-item {
-  padding: 16px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--hh-surface-solid) 92%, var(--hh-brand) 0%);
-  border: 1px solid var(--hh-border);
+  grid-column: span 4;
+  padding: 18px;
+  border-radius: 14px;
+  background:
+    radial-gradient(420px 140px at 20% 0%, rgb(var(--hh-brand-rgb) / 0.12), transparent 60%),
+    color-mix(in srgb, var(--hh-surface-solid) 94%, var(--hh-brand) 0%);
+  border: 1px solid rgba(2, 6, 23, 0.06);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
 }
 
 .feature-item h4 {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--color-heading);
   margin-bottom: 8px;
 }
@@ -200,7 +213,7 @@
 .feature-item p {
   font-size: 14px;
   color: var(--hh-text-2);
-  line-height: 1.5;
+  line-height: 1.55;
   margin: 0;
 }
 
@@ -215,31 +228,35 @@
   display: flex;
   align-items: flex-start;
   gap: 16px;
+  padding: 14px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(2, 6, 23, 0.06);
+  background: color-mix(in srgb, var(--hh-surface-solid) 96%, #000 0%);
 }
 
 .step-num {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: hsla(160, 100%, 37%, 1);
+  background: color-mix(in srgb, var(--hh-brand) 86%, #000 0%);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: 800;
   flex-shrink: 0;
 }
 
 .step-content h4 {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--color-heading);
   margin: 0 0 4px 0;
 }
 
 .step-content p {
   font-size: 14px;
-  color: #666;
+  color: var(--hh-text-2);
   margin: 0;
   line-height: 1.5;
 }
@@ -253,12 +270,14 @@
 
 .code-block {
   padding: 16px;
-  background: color-mix(in srgb, var(--hh-surface-solid) 92%, #000 0%);
-  border-radius: 8px;
-  font-family: monospace;
+  background: rgba(2, 6, 23, 0.04);
+  border-radius: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   color: var(--hh-text);
-  border-left: 4px solid var(--hh-brand);
+  border: 1px solid rgba(2, 6, 23, 0.06);
   margin-bottom: 8px;
+  line-height: 1.6;
+  overflow: auto;
 }
 
 .tips-desc {
@@ -273,10 +292,10 @@
   color: var(--hh-text-2);
   line-height: 1.6;
   margin-bottom: 20px;
-  padding: 12px;
-  background: #f8fffb;
-  border-radius: 8px;
-  border-left: 3px solid var(--hh-brand);
+  padding: 14px;
+  background: rgb(var(--hh-brand-rgb) / 0.06);
+  border-radius: 12px;
+  border: 1px solid rgb(var(--hh-brand-rgb) / 0.14);
 }
 
 /* 联系方式 */
@@ -294,7 +313,7 @@
 
 .contact-item span:first-child {
   color: var(--color-heading);
-  font-weight: 500;
+  font-weight: 700;
   min-width: 80px;
 }
 
@@ -309,15 +328,26 @@
 
   .card {
     padding: 16px;
-    border-radius: 12px;
-  }
-
-  .hero-card h1 {
-    font-size: 24px;
+    border-radius: 14px;
   }
 
   .feature-grid {
-    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .feature-item {
+    grid-column: span 12;
+  }
+
+  .step {
+    padding: 12px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 641px) {
+  .feature-item {
+    grid-column: span 6;
   }
 }
 </style>
