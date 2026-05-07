@@ -3,10 +3,13 @@
   const SUBDOMAIN = __SUBDOMAIN__;
   const TOKEN_KEY = "htmlhub_sync_token";
   const PANEL_MINIMIZED_KEY = "htmlhub_sync_panel_minimized";
+  const AUTO_SYNC_ENABLED_KEY = "htmlhub_sync_auto_enabled";
   const REGISTER_URL = __REGISTER_URL__;
+  const HTML_PUBLIC_HOST = __HTML_PUBLIC_HOST__;
   const LOGIN_API = "/api/user/login";
   const SAVE_API = "/api/html/data/save";
   const LOAD_API = "/api/html/data/load?subdomain=" + encodeURIComponent(SUBDOMAIN);
+  const HOME_MANAGE_PATH = "/home/manage";
 
   function getToken() {
     return localStorage.getItem(TOKEN_KEY) || "";
@@ -19,7 +22,10 @@
     const data = {};
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (!key || key === TOKEN_KEY) continue;
+      if (!key) continue;
+      if (key === TOKEN_KEY) continue;
+      if (key === PANEL_MINIMIZED_KEY) continue;
+      if (key === AUTO_SYNC_ENABLED_KEY) continue;
       data[key] = localStorage.getItem(key);
     }
     return data;
@@ -90,10 +96,11 @@
     input.click();
   }
 
-  async function doUpload() {
+  async function doUpload(options) {
+    const opts = options || {};
     const token = getToken();
     if (!token) {
-      alert("请先登录");
+      if (!opts.silent) alert("请先登录");
       return;
     }
     const res = await request(SAVE_API, {
@@ -101,7 +108,10 @@
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
       body: JSON.stringify({ subdomain: SUBDOMAIN, dataJson: JSON.stringify(readAllLocal()) }),
     });
-    alert(res.code === 0 ? "上传成功" : (res.msg || "上传失败"));
+    if (!opts.silent) {
+      alert(res.code === 0 ? "上传到云端成功" : (res.msg || "上传到云端失败"));
+    }
+    return res;
   }
 
   async function doLoad() {
@@ -112,14 +122,14 @@
     }
     const res = await request(LOAD_API, { method: "GET", headers: { Authorization: "Bearer " + token } });
     if (res.code !== 0) {
-      alert(res.msg || "加载失败");
+      alert(res.msg || "同步到本地失败");
       return;
     }
     try {
       const parsed = JSON.parse(res.data.dataJson || "{}");
       clearAllLocal();
       writeAllLocal(parsed);
-      alert("加载成功，页面将刷新");
+      alert("同步到本地成功，页面将刷新");
       location.reload();
     } catch (e) {
       alert("服务端数据格式异常");
@@ -134,6 +144,9 @@
 
   // 支持最小化，避免遮挡页面内容；状态持久化见 PANEL_MINIMIZED_KEY。
   let minimized = localStorage.getItem(PANEL_MINIMIZED_KEY) === "1";
+  let autoSyncEnabled = localStorage.getItem(AUTO_SYNC_ENABLED_KEY) === "1";
+  let lastLocalSnapshot = "";
+  let autoSyncTimer = null;
   const host = document.createElement("div");
   host.style.cssText = minimized
     ? "position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:2147483647;"
@@ -163,14 +176,16 @@
     '<div id="htmlhub-sync-content">' +
     '<div id="htmlhub-sync-status" class="htmlhub-sync-status">状态：未登录</div>' +
     '<div class="htmlhub-sync-actions">' +
+    '<button class="htmlhub-sync-btn" id="h-home" title="跳转到主页">主页</button>'+
     '<button class="htmlhub-sync-btn" id="h-login" title="登录账号，用于云端数据同步">登录</button>'+
     '<button class="htmlhub-sync-btn" id="h-register" title="跳转到注册页面创建账号">注册</button>'+
     '<button class="htmlhub-sync-btn" id="h-logout" title="退出当前登录的账号">退出</button>'+
     '<button class="htmlhub-sync-btn" id="h-export" title="导出本地所有数据到JSON文件">导出</button>'+
     '<button class="htmlhub-sync-btn" id="h-import" title="从本地文件导入数据，会覆盖现有全部数据">导入</button>'+
     '<button class="htmlhub-sync-btn" id="h-clear" title="清空当前页面的所有本地存储数据">清空</button>'+
-    '<button class="htmlhub-sync-btn" id="h-upload" title="将本地数据同步上传到云端存储">上传</button>'+
-    '<button class="htmlhub-sync-btn" id="h-load" title="从云端加载数据，会覆盖本地全部数据">加载</button>'+
+    '<button class="htmlhub-sync-btn" id="h-upload" title="将本地数据同步上传到云端存储">上传到云端</button>'+
+    '<button class="htmlhub-sync-btn" id="h-load" title="从云端加载数据，会覆盖本地全部数据">同步到本地</button>'+
+    '<button class="htmlhub-sync-btn" id="h-auto" title="开启后每30秒检测本地存储变化并自动上传云端">自动同步：关</button>'+
     "</div></div></div>";
 
   function getEl(id) {
@@ -180,6 +195,54 @@
     const status = getEl("htmlhub-sync-status");
     if (!status) return;
     status.textContent = getToken() ? "状态：已登录" : "状态：未登录";
+  }
+
+  function updateAutoSyncBtn() {
+    const btn = getEl("h-auto");
+    if (!btn) return;
+    btn.textContent = autoSyncEnabled ? "自动同步：开" : "自动同步：关";
+  }
+
+  function takeLocalSnapshot() {
+    try {
+      return JSON.stringify(readAllLocal());
+    } catch (e) {
+      return "";
+    }
+  }
+
+  async function tickAutoSync() {
+    if (!autoSyncEnabled) return;
+    if (!getToken()) return;
+    const current = takeLocalSnapshot();
+    if (!current) return;
+    if (lastLocalSnapshot === "") {
+      lastLocalSnapshot = current;
+      return;
+    }
+    if (current === lastLocalSnapshot) return;
+    lastLocalSnapshot = current;
+    try {
+      const res = await doUpload({ silent: true });
+      if (!res || res.code !== 0) {
+        console.warn("[HtmlHub sync] auto upload failed:", res && res.msg ? res.msg : res);
+      }
+    } catch (e) {
+      console.warn("[HtmlHub sync] auto upload exception:", e);
+    }
+  }
+
+  function startAutoSyncTimer() {
+    stopAutoSyncTimer();
+    lastLocalSnapshot = takeLocalSnapshot();
+    autoSyncTimer = setInterval(tickAutoSync, 30 * 1000);
+  }
+
+  function stopAutoSyncTimer() {
+    if (autoSyncTimer) {
+      clearInterval(autoSyncTimer);
+      autoSyncTimer = null;
+    }
   }
 
   function updatePanelVisibility() {
@@ -211,6 +274,14 @@
     localStorage.setItem(PANEL_MINIMIZED_KEY, minimized ? "1" : "0");
     updatePanelVisibility();
   };
+  getEl("h-home").onclick = function () {
+    if (HTML_PUBLIC_HOST) {
+      const scheme = location.protocol === "https:" ? "https://" : "http://";
+      location.href = scheme + HTML_PUBLIC_HOST + HOME_MANAGE_PATH;
+      return;
+    }
+    location.href = HOME_MANAGE_PATH;
+  };
   getEl("h-login").onclick = doLogin;
   getEl("h-register").onclick = doRegisterJump;
   getEl("h-logout").onclick = doLogout;
@@ -222,8 +293,19 @@
       alert("已清空");
     }
   };
-  getEl("h-upload").onclick = doUpload;
+  getEl("h-upload").onclick = function () {
+    return doUpload({ silent: false });
+  };
   getEl("h-load").onclick = doLoad;
+  getEl("h-auto").onclick = function () {
+    autoSyncEnabled = !autoSyncEnabled;
+    localStorage.setItem(AUTO_SYNC_ENABLED_KEY, autoSyncEnabled ? "1" : "0");
+    updateAutoSyncBtn();
+    if (autoSyncEnabled) startAutoSyncTimer();
+    else stopAutoSyncTimer();
+  };
   updatePanelVisibility();
   updateStatus();
+  updateAutoSyncBtn();
+  if (autoSyncEnabled) startAutoSyncTimer();
 })();

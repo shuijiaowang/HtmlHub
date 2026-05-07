@@ -389,6 +389,8 @@ func loadSyncScriptBody(subdomain, registerURL string) (string, bool) {
 	}
 	scriptBody := strings.ReplaceAll(embedded, "__SUBDOMAIN__", strconv.Quote(subdomain))
 	scriptBody = strings.ReplaceAll(scriptBody, "__REGISTER_URL__", strconv.Quote(registerURL))
+	htmlPublicHost := strings.TrimSpace(config.AppConfig.App.HtmlPublicHost)
+	scriptBody = strings.ReplaceAll(scriptBody, "__HTML_PUBLIC_HOST__", strconv.Quote(htmlPublicHost))
 	return scriptBody, true
 }
 
