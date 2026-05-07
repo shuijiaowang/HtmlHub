@@ -123,12 +123,12 @@
 
 /* 通用卡片样式 */
 .card {
-  background: #fff;
-  border: 1px solid var(--color-border);
+  background: var(--hh-surface-solid);
+  border: 1px solid var(--hh-border);
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--hh-shadow-md);
 }
 
 /* 头部英雄区 */
@@ -147,7 +147,7 @@
 
 .subtitle {
   font-size: 16px;
-  color: #666;
+  color: var(--hh-text-2);
   margin-bottom: 20px;
 }
 
@@ -186,8 +186,8 @@
 .feature-item {
   padding: 16px;
   border-radius: 8px;
-  background: #fafbfc;
-  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--hh-surface-solid) 92%, var(--hh-brand) 0%);
+  border: 1px solid var(--hh-border);
 }
 
 .feature-item h4 {
@@ -199,7 +199,7 @@
 
 .feature-item p {
   font-size: 14px;
-  color: #666;
+  color: var(--hh-text-2);
   line-height: 1.5;
   margin: 0;
 }
@@ -247,36 +247,36 @@
 /* AI 提示代码块 */
 .tips-title {
   font-size: 15px;
-  color: #555;
+  color: var(--hh-text-2);
   margin-bottom: 12px;
 }
 
 .code-block {
   padding: 16px;
-  background: #f6f8fa;
+  background: color-mix(in srgb, var(--hh-surface-solid) 92%, #000 0%);
   border-radius: 8px;
   font-family: monospace;
-  color: #333;
-  border-left: 4px solid hsla(160, 100%, 37%, 1);
+  color: var(--hh-text);
+  border-left: 4px solid var(--hh-brand);
   margin-bottom: 8px;
 }
 
 .tips-desc {
   font-size: 14px;
-  color: #888;
+  color: var(--hh-text-3);
   margin: 0;
 }
 
 /* 新增：平台说明文字样式 */
 .platform-desc {
   font-size: 15px;
-  color: #555;
+  color: var(--hh-text-2);
   line-height: 1.6;
   margin-bottom: 20px;
   padding: 12px;
   background: #f8fffb;
   border-radius: 8px;
-  border-left: 3px solid hsla(160, 100%, 37%, 1);
+  border-left: 3px solid var(--hh-brand);
 }
 
 /* 联系方式 */
@@ -299,6 +299,25 @@
 }
 
 .contact-item span:last-child {
-  color: #666;
+  color: var(--hh-text-2);
+}
+
+@media (max-width: 640px) {
+  .content {
+    padding: 18px 12px;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .hero-card h1 {
+    font-size: 24px;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

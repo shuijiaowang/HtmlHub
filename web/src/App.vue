@@ -65,41 +65,90 @@ watch(
 }
 
 .top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
   min-height: 64px;
-  padding: 0 24px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--hh-border);
+  background: color-mix(in srgb, var(--hh-surface) 88%, transparent);
+  backdrop-filter: blur(10px);
 }
 
 .left-links,
 .right-actions {
   display: flex;
-  gap: 16px;
+  gap: 10px;
   align-items: center;
 }
 
+.left-links {
+  flex: 1;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.left-links a {
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: var(--hh-text-2);
+  border: 1px solid transparent;
+}
+
+.left-links a:hover {
+  text-decoration: none;
+  color: var(--hh-text);
+  background: rgba(16, 185, 129, 0.10);
+}
+
 .nickname {
-  color: var(--color-heading);
+  color: var(--hh-text);
   font-weight: 600;
 }
 
 .text-btn {
   border: none;
-  background: transparent;
-  color: hsla(160, 100%, 37%, 1);
+  background: rgba(16, 185, 129, 0.10);
+  color: color-mix(in srgb, var(--hh-brand) 88%, #000 0%);
   cursor: pointer;
   font-size: 14px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.text-btn:hover {
+  background: rgba(16, 185, 129, 0.16);
 }
 
 .not-login {
-  color: #888;
+  color: var(--hh-text-3);
   font-size: 14px;
 }
 
 a.router-link-active {
-  color: hsla(160, 100%, 30%, 1);
+  color: var(--hh-text);
   font-weight: 600;
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.22);
+}
+
+@media (max-width: 640px) {
+  .top-nav {
+    padding: 10px 12px;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .right-actions {
+    flex-shrink: 0;
+    gap: 8px;
+  }
+
+  .text-btn {
+    padding: 8px 10px;
+  }
 }
 </style>

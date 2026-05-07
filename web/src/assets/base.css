@@ -1,52 +1,64 @@
-/* color palette from <https://github.com/vuejs/theme> */
+/* Design tokens (light first). */
 :root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
+  --hh-brand: #10b981;
+  --hh-brand-2: #3b82f6;
+  --hh-danger: #ef4444;
 
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
+  --hh-bg: #f6f7fb;
+  --hh-bg-soft: #ffffff;
+  --hh-surface: rgba(255, 255, 255, 0.86);
+  --hh-surface-solid: #ffffff;
 
-  --vt-c-indigo: #2c3e50;
+  --hh-text: #0f172a;
+  --hh-text-2: rgba(15, 23, 42, 0.72);
+  --hh-text-3: rgba(15, 23, 42, 0.56);
 
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
+  --hh-border: rgba(15, 23, 42, 0.10);
+  --hh-border-2: rgba(15, 23, 42, 0.16);
 
-  --vt-c-text-light-1: var(--vt-c-indigo);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
-}
+  --hh-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --hh-shadow-md: 0 10px 25px rgba(15, 23, 42, 0.08);
 
-/* semantic color variables for this project */
-:root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
+  --hh-radius-sm: 10px;
+  --hh-radius-md: 14px;
 
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
+  --hh-focus: 0 0 0 3px rgba(16, 185, 129, 0.22);
 
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
-
-  --section-gap: 160px;
+  /* Backwards-compat with existing code */
+  --color-background: var(--hh-bg);
+  --color-background-soft: var(--hh-bg-soft);
+  --color-background-mute: color-mix(in srgb, var(--hh-bg) 86%, #000 0%);
+  --color-border: var(--hh-border);
+  --color-border-hover: var(--hh-border-2);
+  --color-heading: var(--hh-text);
+  --color-text: var(--hh-text);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
+    --hh-bg: #0b1220;
+    --hh-bg-soft: #0f172a;
+    --hh-surface: rgba(15, 23, 42, 0.72);
+    --hh-surface-solid: #0f172a;
 
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
+    --hh-text: rgba(248, 250, 252, 0.92);
+    --hh-text-2: rgba(248, 250, 252, 0.72);
+    --hh-text-3: rgba(248, 250, 252, 0.56);
 
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
+    --hh-border: rgba(248, 250, 252, 0.10);
+    --hh-border-2: rgba(248, 250, 252, 0.16);
+
+    --hh-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
+    --hh-shadow-md: 0 14px 30px rgba(0, 0, 0, 0.35);
+    --hh-focus: 0 0 0 3px rgba(16, 185, 129, 0.28);
+
+    --color-background: var(--hh-bg);
+    --color-background-soft: var(--hh-bg-soft);
+    --color-background-mute: color-mix(in srgb, var(--hh-bg) 86%, #fff 0%);
+    --color-border: var(--hh-border);
+    --color-border-hover: var(--hh-border-2);
+    --color-heading: var(--hh-text);
+    --color-text: var(--hh-text);
   }
 }
 
@@ -60,12 +72,13 @@
 
 body {
   min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
-  line-height: 1.6;
+  color: var(--hh-text);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(16, 185, 129, 0.16), transparent 55%),
+    radial-gradient(1200px 600px at 90% -20%, rgba(59, 130, 246, 0.14), transparent 52%),
+    var(--hh-bg);
+  transition: color 0.25s ease, background-color 0.25s ease;
+  line-height: 1.65;
   font-family:
     Inter,
     -apple-system,
@@ -83,4 +96,8 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(16, 185, 129, 0.22);
 }

@@ -121,16 +121,17 @@ const submitUpload = async () => {
 }
 
 .card {
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  background: var(--hh-surface-solid);
+  border: 1px solid var(--hh-border);
+  border-radius: 12px;
   padding: 18px;
   margin-bottom: 18px;
+  box-shadow: var(--hh-shadow-sm);
 }
 
 .tips {
   margin: 0 0 10px;
-  color: #666;
+  color: var(--hh-text-2);
   font-size: 14px;
 }
 
@@ -142,15 +143,16 @@ const submitUpload = async () => {
 .upload-form label {
   display: grid;
   gap: 6px;
-  color: #333;
+  color: var(--hh-text);
 }
 
 .upload-form input,
 .upload-form textarea {
   width: 100%;
-  border: 1px solid #dcdfe6;
-  border-radius: 6px;
+  border: 1px solid var(--hh-border-2);
+  border-radius: 10px;
   padding: 10px 12px;
+  background: color-mix(in srgb, var(--hh-surface-solid) 94%, #000 0%);
 }
 
 .upload-form textarea {
@@ -160,14 +162,21 @@ const submitUpload = async () => {
 .primary-btn {
   width: fit-content;
   padding: 10px 16px;
-  background-color: #42b883;
+  background: linear-gradient(135deg, var(--hh-brand), color-mix(in srgb, var(--hh-brand) 60%, var(--hh-brand-2) 40%));
   color: #fff;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
+  box-shadow: var(--hh-shadow-sm);
 }
 
 .primary-btn:hover {
-  background-color: #35996d;
+  filter: brightness(0.98);
+}
+
+@media (max-width: 640px) {
+  .content {
+    padding: 18px 12px;
+  }
 }
 </style>

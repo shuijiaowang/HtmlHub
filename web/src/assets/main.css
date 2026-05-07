@@ -7,18 +7,58 @@
   font-weight: normal;
 }
 
-a,
-.green {
+/* Typography */
+h1,
+h2,
+h3,
+h4 {
+  color: var(--hh-text);
+  letter-spacing: -0.01em;
+}
+
+p {
+  color: var(--hh-text-2);
+}
+
+/* Links */
+a {
+  color: color-mix(in srgb, var(--hh-brand) 86%, #000 0%);
   text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+  text-underline-offset: 3px;
+  transition: color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 @media (hover: hover) {
   a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
+    text-decoration: underline;
   }
+}
+
+/* Buttons */
+button {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--hh-focus);
+  border-radius: 8px;
+}
+
+/* Form controls (keep compatible with ElementPlus) */
+input,
+textarea {
+  font: inherit;
+  color: var(--hh-text);
+  background: var(--hh-surface-solid);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--hh-text-3);
 }
 
 @media (min-width: 1024px) {
