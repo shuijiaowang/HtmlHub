@@ -101,7 +101,10 @@ service.interceptors.response.use(
             ElMessage.error('登录已过期，请重新登录')
             const userStore = useUserStore()
             userStore.clearUserState() // 清理用户状态
-            router.replace({ name: 'login' })
+            userStore.openAuthDialog('login')
+            if (router.currentRoute?.value?.path !== '/home') {
+                router.replace({ path: '/home' })
+            }
         } else {
             // 其他HTTP错误
             const status = error.response.status

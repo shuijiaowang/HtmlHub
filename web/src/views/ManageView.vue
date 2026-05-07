@@ -67,12 +67,14 @@ import {
   updateHtmlVisibility
 } from '@/api/html'
 import { useUserStore } from '@/stores/user'
+import { ElMessage } from 'element-plus'
 
 /** 子域名 HTML 访问用 host，本地与线上由 Vite 环境变量区分 */
 const htmlPublicHost = import.meta.env.VITE_HTML_PUBLIC_HOST || 'localhost:7789'
 
 const records = ref([])
 const userStore = useUserStore()
+const isLoggedIn = computed(() => !!userStore.token)
 
 const descDialogVisible = ref(false)
 const htmlDialogVisible = ref(false)
@@ -128,6 +130,11 @@ const totalVisitCount = computed(() => {
 })
 
 const loadRecords = async () => {
+  if (!userStore.token) {
+    ElMessage.warning('请先登录后查看个人记录')
+    userStore.openAuthDialog('login')
+    return
+  }
   const res = await getMyHtmlList()
   records.value = Array.isArray(res.data) ? res.data : []
 }
@@ -182,7 +189,14 @@ const formatApprovalStatus = (status) => {
 }
 
 onMounted(async () => {
-  await loadRecords()
+  if (userStore.token) {
+    await loadRecords()
+    return
+  }
+
+  window.setTimeout(() => {
+    if (!userStore.token) userStore.openAuthDialog('login')
+  }, 3000)
 })
 </script>
 

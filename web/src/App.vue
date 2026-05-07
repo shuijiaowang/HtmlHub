@@ -1,9 +1,11 @@
 <script setup>
-import { computed } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
+import { computed, watch } from 'vue'
+import { RouterView, useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import AuthDialog from '@/components/AuthDialog.vue'
 
 const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
 
 const isHomeRoute = computed(() => route.path.startsWith('/home'))
@@ -13,6 +15,22 @@ const displayNickname = computed(() => userStore.userInfo.nickname || '已登录
 const logout = async () => {
   await userStore.logout()
 }
+
+const openLogin = () => userStore.openAuthDialog('login')
+const openRegister = () => userStore.openAuthDialog('register')
+
+watch(
+  () => route.query?.auth,
+  async (val) => {
+    if (val === 'login' || val === 'register') {
+      userStore.openAuthDialog(val)
+      const nextQuery = { ...route.query }
+      delete nextQuery.auth
+      await router.replace({ query: nextQuery })
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -30,12 +48,14 @@ const logout = async () => {
           <button class="text-btn" @click="logout">退出</button>
         </template>
         <template v-else>
-          <router-link to="/register">注册</router-link>
-          <router-link to="/login">登录</router-link>
+          <span class="not-login">未登录</span>
+          <button class="text-btn" @click="openRegister">注册</button>
+          <button class="text-btn" @click="openLogin">登录</button>
         </template>
       </div>
     </header>
     <RouterView />
+    <AuthDialog />
   </div>
 </template>
 
@@ -70,6 +90,11 @@ const logout = async () => {
   background: transparent;
   color: hsla(160, 100%, 37%, 1);
   cursor: pointer;
+  font-size: 14px;
+}
+
+.not-login {
+  color: #888;
   font-size: 14px;
 }
 

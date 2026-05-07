@@ -1,6 +1,4 @@
 import {createRouter, createWebHistory} from 'vue-router'
-import LoginView from "@/views/LoginView.vue";
-import RegisterView from "@/views/RegisterView.vue";
 import { useUserStore } from '@/stores/user'
 
 const DEFAULT_TITLE = 'HtmlHub - 轻量在线 HTML 托管平台'
@@ -15,13 +13,13 @@ const router = createRouter({
         {
             path: '/login',
             name: 'login',
-            component: LoginView,
+            redirect: '/home?auth=login',
             meta: { title: '登录' }
         },
         {
             path: '/register',
             name: 'register',
-            component: RegisterView,
+            redirect: '/home?auth=register',
             meta: { title: '注册' }
         },
         {
@@ -34,13 +32,13 @@ const router = createRouter({
             path: '/home/upload',
             name: 'home-upload',
             component: () => import('../views/UploadView.vue'),
-            meta: { requiresAuth: true, title: '上传 HTML' }
+            meta: { title: '上传 HTML' }
         },
         {
             path: '/home/manage',
             name: 'home-manage',
             component: () => import('../views/ManageView.vue'),
-            meta: { requiresAuth: true, title: '个人 HTML 管理' }
+            meta: { title: '个人 HTML 管理' }
         },
         {
             path: '/home/showcase',
@@ -57,12 +55,9 @@ const router = createRouter({
 
     ]
 })
-// 路由守卫：未登录用户只能访问登录页
+// 路由守卫：仅管理员页面需要强制校验
 router.beforeEach((to, from, next) => {
-    const isAuthenticated = !!localStorage.getItem('token')
-    if (to.meta.requiresAuth && !isAuthenticated) {
-        next('/login')
-    } else if (to.meta.requiresAdmin) {
+    if (to.meta.requiresAdmin) {
         const userStore = useUserStore()
         const role = userStore.userInfo?.role
         if (role === 'admin' || role === 'super_admin') {

@@ -40,15 +40,25 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { onMounted, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { uploadHtml } from '@/api/html'
+import { useUserStore } from '@/stores/user'
 
 const uploadForm = reactive({
   subdomain: '',
   description: '',
   fileSize: 0,
   htmlContent: ''
+})
+
+const userStore = useUserStore()
+
+onMounted(() => {
+  if (userStore.token) return
+  window.setTimeout(() => {
+    if (!userStore.token) userStore.openAuthDialog('login')
+  }, 3000)
 })
 
 const onSelectFile = async (event) => {
@@ -68,6 +78,12 @@ const generateAutoFileName = () => {
 }
 
 const submitUpload = async () => {
+  if (!userStore.token) {
+    ElMessage.warning('请先登录后再上传')
+    userStore.openAuthDialog('login')
+    return
+  }
+
   const htmlContent = uploadForm.htmlContent.trim()
   if (!htmlContent) {
     ElMessage.warning('请填写HTML文本或上传HTML文件')

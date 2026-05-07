@@ -13,6 +13,10 @@ export const useUserStore = defineStore('user', () => {
         role: ''
     })
 
+    // 登录/注册弹窗（全局）
+    const authDialogVisible = useStorage('authDialogVisible', false)
+    const authDialogMode = useStorage('authDialogMode', 'login') // 'login' | 'register'
+
     const setUserInfo = (info) => {
         userInfo.value = {
             nickname: info.nickname || userInfo.value.nickname,
@@ -35,6 +39,15 @@ export const useUserStore = defineStore('user', () => {
             uuid: '',
             role: ''
         }
+    }
+
+    const openAuthDialog = (mode = 'login') => {
+        authDialogMode.value = mode
+        authDialogVisible.value = true
+    }
+
+    const closeAuthDialog = () => {
+        authDialogVisible.value = false
     }
 
     const loginIn = async (loginForm) => {
@@ -71,6 +84,7 @@ export const useUserStore = defineStore('user', () => {
             }
 
             ElMessage.success('登录成功')
+            closeAuthDialog()
             return true
         } catch (error) {
             console.error('登录失败:', error)
@@ -83,16 +97,24 @@ export const useUserStore = defineStore('user', () => {
     // 退出登录
     const logout = async () => {
         clearUserState()
-        await router.replace({ name: 'login' })
+        if (router.hasRoute('home')) {
+            await router.replace({ name: 'home' })
+        } else {
+            await router.replace({ path: '/home' })
+        }
         ElMessage.success('已退出登录')
     }
 
     return {
         token,
         userInfo,
+        authDialogVisible,
+        authDialogMode,
         setUserInfo,
         setToken,
         clearUserState,
+        openAuthDialog,
+        closeAuthDialog,
         loginIn,
         logout
     }

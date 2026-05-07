@@ -102,7 +102,7 @@ func (s *HTMLRecordService) Upload(userID uint, subdomain, fileName, description
 		Description:    description,
 		FileSize:       fileSize,
 		HTMLContent:    htmlContent,
-		Visibility:     HTMLVisibilityPrivate,
+		Visibility:     HTMLVisibilityPublic,
 		ApprovalStatus: model.HTMLApprovalPending,
 	}
 	if err := dao.CreateHTMLRecord(record); err != nil {
@@ -184,11 +184,22 @@ func (s *HTMLRecordService) UpdateHTMLContentByUserID(userID, id uint, htmlConte
 	if err != nil {
 		return nil, errors.New("记录不存在或无权操作")
 	}
-	if err := dao.UpdateHTMLRecordContentAndResetApproval(record, htmlContent); err != nil {
+
+	nextStatus := record.ApprovalStatus
+	switch record.ApprovalStatus {
+	case model.HTMLApprovalApproved:
+		nextStatus = model.HTMLApprovalPending
+	case model.HTMLApprovalRejected:
+		nextStatus = model.HTMLApprovalRejected
+	default:
+		nextStatus = model.HTMLApprovalPending
+	}
+
+	if err := dao.UpdateHTMLRecordContentAndSetApproval(record, htmlContent, nextStatus); err != nil {
 		return nil, err
 	}
 	record.HTMLContent = htmlContent
-	record.ApprovalStatus = model.HTMLApprovalPending
+	record.ApprovalStatus = nextStatus
 	return record, nil
 }
 
@@ -227,7 +238,9 @@ func (s *HTMLRecordService) GetBySubdomain(subdomain string) (*model.HtmlRecord,
 }
 
 func (s *HTMLRecordService) CanPublicAccess(record *model.HtmlRecord) bool {
-	return record != nil && record.Visibility == HTMLVisibilityPublic && record.ApprovalStatus == model.HTMLApprovalApproved
+	return record != nil &&
+		record.Visibility == HTMLVisibilityPublic &&
+		record.ApprovalStatus != model.HTMLApprovalRejected
 }
 
 func (s *HTMLRecordService) CanOwnerAccess(record *model.HtmlRecord, userID uint) bool {

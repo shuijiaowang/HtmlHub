@@ -14,7 +14,7 @@ type HtmlRecord struct {
 	Description    string `json:"description" gorm:"type:varchar(500);comment:简介"`
 	FileSize       int64  `json:"fileSize" gorm:"not null;default:0;comment:文件大小(字节)"`
 	HTMLContent    string `json:"htmlContent" gorm:"type:longtext;not null;comment:HTML文本内容"`
-	Visibility     string `json:"visibility" gorm:"type:varchar(20);not null;default:private;comment:可见性(public/private)"`
+	Visibility     string `json:"visibility" gorm:"type:varchar(20);not null;default:public;comment:可见性(public/private)"`
 	ApprovalStatus string `json:"approvalStatus" gorm:"type:varchar(20);not null;default:pending;comment:审核状态(pending/approved/rejected)"`
 	VisitCount     int64  `json:"visitCount" gorm:"not null;default:0;comment:访问次数"`
 }

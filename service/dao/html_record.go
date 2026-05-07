@@ -68,10 +68,10 @@ func UpdateHTMLRecordDescription(record *model.HtmlRecord, description string) e
 	return db.DB.Model(record).Update("description", description).Error
 }
 
-func UpdateHTMLRecordContentAndResetApproval(record *model.HtmlRecord, htmlContent string) error {
+func UpdateHTMLRecordContentAndSetApproval(record *model.HtmlRecord, htmlContent, approvalStatus string) error {
 	return db.DB.Model(record).Updates(map[string]interface{}{
 		"html_content":    htmlContent,
-		"approval_status": model.HTMLApprovalPending,
+		"approval_status": approvalStatus,
 	}).Error
 }
 
