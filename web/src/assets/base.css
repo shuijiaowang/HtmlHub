@@ -104,3 +104,19 @@ body {
 ::selection {
   background: rgb(var(--hh-brand-rgb) / 0.22);
 }
+
+/* Element Plus：窄屏下对话框不超出视口（登录/注册、管理页编辑等） */
+@media (max-width: 640px) {
+  .el-dialog {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px);
+    box-sizing: border-box;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .el-dialog__body {
+    max-height: min(72vh, calc(100vh - 130px));
+    overflow-y: auto;
+  }
+}

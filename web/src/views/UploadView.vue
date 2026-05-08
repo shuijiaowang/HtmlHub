@@ -23,9 +23,11 @@
                 <span class="label">简介（可选）</span>
                 <input v-model="uploadForm.description" maxlength="500" placeholder="写一点介绍（方便后续管理）">
               </label>
-              <label class="field">
+              <label class="field field-file">
                 <span class="label">选择本地 HTML 文件（可选）</span>
-                <input class="file" type="file" accept=".html,text/html" @change="onSelectFile">
+                <span class="file-row">
+                  <input class="file" type="file" accept=".html,text/html" @change="onSelectFile">
+                </span>
               </label>
               <div class="actions">
                 <button class="primary-btn" type="submit">上传</button>
@@ -215,6 +217,41 @@ const submitUpload = async () => {
   border-radius: var(--hh-radius-sm);
   padding: 10px 12px;
   background: color-mix(in srgb, var(--hh-surface-solid) 94%, #000 0%);
+}
+
+.field-file .file-row {
+  display: block;
+}
+
+.upload-form input.file[type='file'] {
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.upload-form input.file::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 14px;
+  border-radius: var(--hh-radius-sm);
+  border: 1px solid rgb(var(--hh-brand-rgb) / 0.22);
+  background: rgb(var(--hh-brand-rgb) / 0.10);
+  color: color-mix(in srgb, var(--hh-brand) 88%, var(--hh-text) 12%);
+  font-weight: 600;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.upload-form input.file::-webkit-file-upload-button {
+  margin-right: 12px;
+  padding: 8px 14px;
+  border-radius: var(--hh-radius-sm);
+  border: 1px solid rgb(var(--hh-brand-rgb) / 0.22);
+  background: rgb(var(--hh-brand-rgb) / 0.10);
+  color: color-mix(in srgb, var(--hh-brand) 88%, var(--hh-text) 12%);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
 }
 
 .upload-form textarea {

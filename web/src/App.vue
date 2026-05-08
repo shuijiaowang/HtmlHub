@@ -52,12 +52,11 @@ watch(
         <div class="right-actions">
           <template v-if="isLoggedIn">
             <span class="nickname" :title="displayNickname">{{ displayNickname }}</span>
-            <button class="ghost-btn" @click="logout">退出</button>
+            <button type="button" class="ghost-btn nav-logout" @click="logout">退出</button>
           </template>
           <template v-else>
-            <span class="not-login">未登录</span>
-            <button class="ghost-btn" @click="openRegister">注册</button>
-            <button class="primary-btn" @click="openLogin">登录</button>
+            <button type="button" class="ghost-btn nav-register" @click="openRegister">注册</button>
+            <button type="button" class="primary-btn nav-login" @click="openLogin">登录</button>
           </template>
         </div>
       </div>
@@ -207,11 +206,6 @@ watch(
   transform: translateY(1px);
 }
 
-.not-login {
-  color: var(--hh-text-3);
-  font-size: 14px;
-}
-
 a.router-link-active {
   color: var(--hh-text);
   font-weight: 600;
@@ -220,23 +214,63 @@ a.router-link-active {
 }
 
 @media (max-width: 640px) {
+  .top-nav {
+    min-height: 48px;
+  }
+
   .nav-inner {
-    padding: 10px 12px;
-    gap: 10px;
+    padding: 6px 8px;
+    gap: 6px;
+    min-height: 48px;
+  }
+
+  .brand {
+    display: none;
+  }
+
+  .left-links {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow-x: visible;
+    justify-content: space-between;
+    gap: 2px;
+    padding: 0;
+  }
+
+  .left-links a {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 6px 2px;
+    border-radius: 8px;
+    font-size: 12px;
+    text-align: center;
+    line-height: 1.25;
   }
 
   .right-actions {
+    flex: 0 0 auto;
     flex-shrink: 0;
-    gap: 8px;
+    gap: 6px;
+  }
+
+  .nav-register {
+    display: none;
   }
 
   .nickname {
     display: none;
   }
 
-  .ghost-btn,
+  .nav-login,
+  .nav-logout {
+    padding: 6px 8px;
+    font-size: 12px;
+    border-radius: 10px;
+  }
+
+  .ghost-btn:not(.nav-register),
   .primary-btn {
-    padding: 8px 10px;
+    padding: 6px 8px;
   }
 }
 </style>
