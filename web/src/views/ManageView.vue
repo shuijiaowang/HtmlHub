@@ -185,7 +185,8 @@ const buildShareUrl = (item) => {
   const subdomain = item?.subdomain
   if (!subdomain) return '#'
   const url = new URL(`${window.location.protocol}//${subdomain}.${htmlPublicHost}`)
-  if ((item.visibility !== 'public' || item.approvalStatus !== 'approved') && userStore.token) {
+  // 已登录时始终附带 token，便于子域注入的同步脚本将 JWT 写入 localStorage（与 access_check 一致）
+  if (userStore.token) {
     url.searchParams.set('token', userStore.token)
   }
   return url.toString()

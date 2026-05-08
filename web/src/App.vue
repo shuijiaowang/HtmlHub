@@ -17,7 +17,9 @@ const logout = async () => {
 }
 
 const openLogin = () => userStore.openAuthDialog('login')
-const openRegister = () => userStore.openAuthDialog('register')
+const openRegister = () => {
+  router.push({ path: '/home', query: { auth: 'register' } })
+}
 
 watch(
   () => route.query?.auth,

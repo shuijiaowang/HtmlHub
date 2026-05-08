@@ -350,12 +350,8 @@ func extractSubdomain(host string) string {
 }
 
 func portalRegisterURL() string {
-	origin := strings.TrimSpace(config.AppConfig.App.PortalOrigin)
-	origin = strings.TrimSuffix(origin, "/")
-	if origin == "" {
-		origin = "http://localhost:5173"
-	}
-	return origin + "/register"
+	// 前端已无独立 /register 路由，与门户主页一致（见 web 路由）
+	return portalHomeURL()
 }
 
 func portalHomeURL() string {

@@ -11,6 +11,17 @@
   const LOAD_API = "/api/html/data/load?subdomain=" + encodeURIComponent(SUBDOMAIN);
   const HOME_MANAGE_PATH = "/home/manage";
 
+  // 与管理页「点击打开」、access_check 一致：从 ?token= 落盘并清理地址栏
+  try {
+    var __ingestUrl = new URL(window.location.href);
+    var __qTok = __ingestUrl.searchParams.get("token");
+    if (__qTok) {
+      localStorage.setItem(TOKEN_KEY, __qTok);
+      __ingestUrl.searchParams.delete("token");
+      window.history.replaceState(null, "", __ingestUrl.toString());
+    }
+  } catch (e) {}
+
   function getToken() {
     return localStorage.getItem(TOKEN_KEY) || "";
   }
@@ -41,27 +52,12 @@
     if (token) localStorage.setItem(TOKEN_KEY, token);
   }
 
-  async function doLogin() {
-    const email = prompt("请输入登录邮箱");
-    if (!email) return;
-    const password = prompt("请输入登录密码");
-    if (!password) return;
-    const res = await request(LOGIN_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    if (res.code !== 0) {
-      alert(res.msg || "登录失败");
+  function doRegisterJump() {
+    if (REGISTER_URL) {
+      location.href = REGISTER_URL;
       return;
     }
-    localStorage.setItem(TOKEN_KEY, res.data.token);
-    alert("登录成功");
-    updateStatus();
-  }
-
-  function doRegisterJump() {
-    window.open(REGISTER_URL, "_blank");
+    location.href = HOME_MANAGE_PATH;
   }
 
   function doExport() {
@@ -170,15 +166,27 @@
     ".htmlhub-sync-btn:hover{background:#f5f7fa;}" +
     ".htmlhub-sync-mini{padding:2px 6px;font-size:12px;}" +
     ".htmlhub-sync-hidden{display:none;}" +
+    ".htmlhub-sync-login{margin:10px 0;padding:10px 0;border-top:1px solid #eee;border-bottom:1px solid #eee;}" +
+    ".htmlhub-sync-login-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}" +
+    ".htmlhub-sync-label{flex:0 0 40px;font-size:12px;color:#666;}" +
+    ".htmlhub-sync-input{flex:1;min-width:0;padding:6px 8px;border:1px solid #dcdfe6;border-radius:6px;font-size:13px;box-sizing:border-box;}" +
+    ".htmlhub-sync-login-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:8px;}" +
     "</style>" +
     '<div class="htmlhub-sync-panel">' +
     '<div class="htmlhub-sync-header"><div class="htmlhub-sync-title">HtmlHub 同步助手</div><button class="htmlhub-sync-btn htmlhub-sync-mini" id="h-toggle">最小化</button></div>' +
     '<div id="htmlhub-sync-content">' +
     '<div id="htmlhub-sync-status" class="htmlhub-sync-status">状态：未登录</div>' +
+    '<div id="htmlhub-sync-login" class="htmlhub-sync-login htmlhub-sync-hidden">' +
+    '<div class="htmlhub-sync-login-row"><span class="htmlhub-sync-label">邮箱</span><input class="htmlhub-sync-input" type="email" id="h-email" autocomplete="username" /></div>' +
+    '<div class="htmlhub-sync-login-row"><span class="htmlhub-sync-label">密码</span><input class="htmlhub-sync-input" type="password" id="h-password" autocomplete="current-password" /></div>' +
+    '<div class="htmlhub-sync-login-foot">' +
+    '<button class="htmlhub-sync-btn" type="button" id="h-login-cancel">取消</button>' +
+    '<button class="htmlhub-sync-btn" type="button" id="h-login-submit">登录</button>' +
+    "</div></div>" +
     '<div class="htmlhub-sync-actions">' +
     '<button class="htmlhub-sync-btn" id="h-home" title="跳转到主页">主页</button>'+
     '<button class="htmlhub-sync-btn" id="h-login" title="登录账号，用于云端数据同步">登录</button>'+
-    '<button class="htmlhub-sync-btn" id="h-register" title="跳转到注册页面创建账号">注册</button>'+
+    '<button class="htmlhub-sync-btn" id="h-register" title="打开门户主页（注册请使用页头入口）">注册</button>'+
     '<button class="htmlhub-sync-btn" id="h-logout" title="退出当前登录的账号">退出</button>'+
     '<button class="htmlhub-sync-btn" id="h-export" title="导出本地所有数据到JSON文件">导出</button>'+
     '<button class="htmlhub-sync-btn" id="h-import" title="从本地文件导入数据，会覆盖现有全部数据">导入</button>'+
@@ -191,6 +199,38 @@
   function getEl(id) {
     return shadow.getElementById(id);
   }
+
+  function setLoginFormVisible(show) {
+    var box = getEl("htmlhub-sync-login");
+    if (box) box.classList.toggle("htmlhub-sync-hidden", !show);
+  }
+
+  async function doLoginSubmit() {
+    var emailEl = getEl("h-email");
+    var pwEl = getEl("h-password");
+    var email = (emailEl && emailEl.value) ? emailEl.value.trim() : "";
+    var password = (pwEl && pwEl.value) ? pwEl.value : "";
+    if (!email || !password) {
+      alert("请输入邮箱和密码");
+      return;
+    }
+    var res = await request(LOGIN_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email, password: password }),
+    });
+    if (res.code !== 0) {
+      alert(res.msg || "登录失败");
+      return;
+    }
+    localStorage.setItem(TOKEN_KEY, res.data.token);
+    if (emailEl) emailEl.value = "";
+    if (pwEl) pwEl.value = "";
+    setLoginFormVisible(false);
+    alert("登录成功");
+    updateStatus();
+  }
+
   function updateStatus() {
     const status = getEl("htmlhub-sync-status");
     if (!status) return;
@@ -282,7 +322,27 @@
     }
     location.href = HOME_MANAGE_PATH;
   };
-  getEl("h-login").onclick = doLogin;
+  getEl("h-login").onclick = function () {
+    setLoginFormVisible(true);
+    var em = getEl("h-email");
+    if (em) setTimeout(function () { em.focus(); }, 0);
+  };
+  getEl("h-login-submit").onclick = function () {
+    doLoginSubmit();
+  };
+  getEl("h-login-cancel").onclick = function () {
+    setLoginFormVisible(false);
+    var em = getEl("h-email");
+    var pw = getEl("h-password");
+    if (em) em.value = "";
+    if (pw) pw.value = "";
+  };
+  var hPassEl = getEl("h-password");
+  if (hPassEl) {
+    hPassEl.onkeydown = function (ev) {
+      if (ev.key === "Enter") doLoginSubmit();
+    };
+  }
   getEl("h-register").onclick = doRegisterJump;
   getEl("h-logout").onclick = doLogout;
   getEl("h-export").onclick = doExport;
