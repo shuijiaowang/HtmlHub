@@ -28,7 +28,15 @@
             </div>
             <p class="record-route">
               访问链接：{{ item.subdomain }}.{{ htmlPublicHost }}
-              <a class="share-link" :href="buildShareUrl(item)" target="_blank">点击打开</a>
+              <button
+                type="button"
+                class="share-link"
+                title="在新标签页打开"
+                @click="openShare(item, $event)"
+                @auxclick="openShare(item, $event)"
+              >
+                点击打开
+              </button>
             </p>
             <p class="record-desc">{{ item.description ? `简介：${item.description}` : '简介：无简介' }}</p>
             <div class="record-meta">
@@ -60,7 +68,21 @@
 
     <el-dialog v-model="htmlDialogVisible" title="更新 HTML" width="720px" destroy-on-close @closed="editingRecord = null">
       <p class="dialog-hint">保存后仅替换 HTML 正文，审核状态将重置为「未审核」。须为完整文档（含 &lt;html&gt;、&lt;head&gt;、&lt;body&gt; 及闭合标签）。</p>
-      <el-input v-model="htmlDraft" type="textarea" :rows="16" placeholder="粘贴完整 HTML" />
+      <div class="html-dialog-editor">
+        <div class="html-toolbar" role="toolbar" aria-label="HTML 文本操作">
+          <button type="button" class="toolbar-btn" @click="copyHtmlDraft">复制</button>
+          <button type="button" class="toolbar-btn" @click="pasteHtmlDraft">粘贴</button>
+          <button type="button" class="toolbar-btn" @click="clearHtmlDraft">清空</button>
+        </div>
+        <el-input
+          ref="htmlInputRef"
+          v-model="htmlDraft"
+          type="textarea"
+          :rows="16"
+          placeholder="粘贴完整 HTML"
+          @paste="onHtmlDraftNativePaste"
+        />
+      </div>
       <template #footer>
         <el-button @click="htmlDialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="htmlSaving" @click="saveHtmlContent">保存</el-button>
@@ -70,7 +92,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, unref } from 'vue'
 import {
   deleteHtmlRecord,
   getMyHtmlList,
@@ -93,8 +115,82 @@ const htmlDialogVisible = ref(false)
 const editingRecord = ref(null)
 const descDraft = ref('')
 const htmlDraft = ref('')
+const htmlInputRef = ref(null)
 const descSaving = ref(false)
 const htmlSaving = ref(false)
+
+const resolveHtmlDraftTextarea = () => {
+  const inst = htmlInputRef.value
+  if (!inst) return null
+  const exposed = inst.textarea
+  if (exposed != null) return unref(exposed)
+  return inst.$el?.querySelector?.('textarea') ?? null
+}
+
+const focusTextareaStartAndReveal = (ta) => {
+  if (!ta || !document.contains(ta)) return
+  ta.scrollTop = 0
+  ta.setSelectionRange(0, 0)
+  try {
+    ta.focus({ preventScroll: true })
+  } catch {
+    ta.focus()
+  }
+  ta.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+}
+
+const afterHtmlDraftUpdate = () => {
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      focusTextareaStartAndReveal(resolveHtmlDraftTextarea())
+    })
+  })
+}
+
+const copyHtmlDraft = async () => {
+  const text = htmlDraft.value
+  if (!text) {
+    ElMessage.warning('暂无内容可复制')
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('已复制到剪贴板')
+  } catch {
+    ElMessage.error('复制失败：无法写入剪贴板，请检查权限或浏览器限制')
+  }
+}
+
+const pasteHtmlDraft = async () => {
+  let text
+  try {
+    text = await navigator.clipboard.readText()
+  } catch {
+    ElMessage.error('粘贴失败：无法读取剪贴板，请检查权限或在内置浏览器中重试')
+    return
+  }
+  htmlDraft.value = text
+  afterHtmlDraftUpdate()
+}
+
+const clearHtmlDraft = () => {
+  htmlDraft.value = ''
+  afterHtmlDraftUpdate()
+}
+
+const onHtmlDraftNativePaste = (e) => {
+  const el = e.target?.tagName === 'TEXTAREA' ? e.target : resolveHtmlDraftTextarea()
+  const cd = e.clipboardData
+  if (!cd || !el) return
+  const text = cd.getData('text/plain')
+  if (text === '') return
+  e.preventDefault()
+  const start = el.selectionStart
+  const end = el.selectionEnd
+  const prev = htmlDraft.value
+  htmlDraft.value = prev.slice(0, start) + text + prev.slice(end)
+  afterHtmlDraftUpdate()
+}
 
 const openDescDialog = (item) => {
   editingRecord.value = item
@@ -183,13 +279,25 @@ const removeRecord = async (item) => {
 
 const buildShareUrl = (item) => {
   const subdomain = item?.subdomain
-  if (!subdomain) return '#'
+  if (!subdomain) return ''
   const url = new URL(`${window.location.protocol}//${subdomain}.${htmlPublicHost}`)
   // 已登录时始终附带 token，便于子域注入的同步脚本将 JWT 写入 localStorage（与 access_check 一致）
   if (userStore.token) {
     url.searchParams.set('token', userStore.token)
   }
   return url.toString()
+}
+
+/** 不把带 token 的 URL 写在 href 上，避免右键「复制链接」泄露 JWT；仅在真实点击时打开 */
+const openShare = (item, event) => {
+  if (event) {
+    if (event.type === 'auxclick' && event.button !== 1) return
+    if (event.type === 'click' && event.button !== 0) return
+    event.preventDefault()
+  }
+  const url = buildShareUrl(item)
+  if (!url) return
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 
 const formatApprovalStatus = (status) => {
@@ -367,6 +475,18 @@ onMounted(async () => {
 .share-link {
   margin-left: 10px;
   font-weight: 650;
+  font: inherit;
+  color: color-mix(in srgb, var(--hh-brand) 86%, #000 0%);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.share-link:hover {
+  color: var(--hh-brand);
 }
 
 .record-meta {
@@ -399,6 +519,33 @@ onMounted(async () => {
   color: var(--hh-text-2);
   font-size: 13px;
   line-height: 1.5;
+}
+
+.html-dialog-editor {
+  display: grid;
+  gap: 6px;
+}
+
+.html-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toolbar-btn {
+  padding: 6px 12px;
+  border-radius: var(--hh-radius-sm);
+  border: 1px solid var(--hh-border);
+  background: color-mix(in srgb, var(--hh-surface-solid) 92%, rgb(var(--hh-brand-rgb) / 0.06) 8%);
+  color: var(--hh-text);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.toolbar-btn:hover {
+  border-color: rgb(var(--hh-brand-rgb) / 0.22);
+  background: rgb(var(--hh-brand-rgb) / 0.08);
 }
 
 @media (max-width: 900px) {

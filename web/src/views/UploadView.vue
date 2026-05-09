@@ -37,11 +37,18 @@
 
             <label class="field right">
               <span class="label">HTML 文本</span>
+              <div class="html-toolbar" role="toolbar" aria-label="HTML 文本操作">
+                <button type="button" class="toolbar-btn" @click="copyHtmlContent">复制</button>
+                <button type="button" class="toolbar-btn" @click="pasteHtmlContent">粘贴</button>
+                <button type="button" class="toolbar-btn" @click="clearHtmlContent">清空</button>
+              </div>
               <textarea
-                v-model="uploadForm.htmlContent"
+                ref="htmlTextareaRef"
+                v-model="htmlContent"
                 rows="14"
                 placeholder="粘贴完整 HTML（含 <html>、<head>、<body> 及闭合标签）"
                 required
+                @paste="onHtmlNativePaste"
               />
             </label>
           </div>
@@ -52,7 +59,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive } from 'vue'
+import { nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { uploadHtml } from '@/api/html'
 import { useUserStore } from '@/stores/user'
@@ -63,11 +70,79 @@ const htmlPublicHost = import.meta.env.VITE_HTML_PUBLIC_HOST || 'localhost:7789'
 const uploadForm = reactive({
   subdomain: '',
   description: '',
-  fileSize: 0,
-  htmlContent: ''
+  fileSize: 0
 })
 
+/** 大段 HTML 单独 ref，减少与表单其余字段的响应式耦合 */
+const htmlContent = ref('')
+const htmlTextareaRef = ref(null)
+
 const userStore = useUserStore()
+
+const focusTextareaStartAndReveal = (ta) => {
+  if (!ta || !document.contains(ta)) return
+  ta.scrollTop = 0
+  ta.setSelectionRange(0, 0)
+  try {
+    ta.focus({ preventScroll: true })
+  } catch {
+    ta.focus()
+  }
+  ta.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+}
+
+const afterHtmlValueUpdate = () => {
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      focusTextareaStartAndReveal(htmlTextareaRef.value)
+    })
+  })
+}
+
+const copyHtmlContent = async () => {
+  const text = htmlContent.value
+  if (!text) {
+    ElMessage.warning('暂无内容可复制')
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('已复制到剪贴板')
+  } catch {
+    ElMessage.error('复制失败：无法写入剪贴板，请检查权限或浏览器限制')
+  }
+}
+
+const pasteHtmlContent = async () => {
+  let text
+  try {
+    text = await navigator.clipboard.readText()
+  } catch {
+    ElMessage.error('粘贴失败：无法读取剪贴板，请检查权限或在内置浏览器中重试')
+    return
+  }
+  htmlContent.value = text
+  afterHtmlValueUpdate()
+}
+
+const clearHtmlContent = () => {
+  htmlContent.value = ''
+  afterHtmlValueUpdate()
+}
+
+const onHtmlNativePaste = (e) => {
+  const cd = e.clipboardData
+  if (!cd) return
+  const text = cd.getData('text/plain')
+  if (text === '') return
+  e.preventDefault()
+  const el = e.target
+  const start = el.selectionStart
+  const end = el.selectionEnd
+  const prev = htmlContent.value
+  htmlContent.value = prev.slice(0, start) + text + prev.slice(end)
+  afterHtmlValueUpdate()
+}
 
 onMounted(() => {
   if (userStore.token) return
@@ -80,7 +155,8 @@ const onSelectFile = async (event) => {
   const file = event.target.files?.[0]
   if (!file) return
   uploadForm.fileSize = file.size
-  uploadForm.htmlContent = await file.text()
+  htmlContent.value = await file.text()
+  afterHtmlValueUpdate()
 }
 
 const generateAutoFileName = () => {
@@ -99,27 +175,27 @@ const submitUpload = async () => {
     return
   }
 
-  const htmlContent = uploadForm.htmlContent.trim()
-  if (!htmlContent) {
+  const body = htmlContent.value.trim()
+  if (!body) {
     ElMessage.warning('请填写HTML文本或上传HTML文件')
     return
   }
   const autoFileName = generateAutoFileName()
-  const fileSize = uploadForm.fileSize > 0 ? uploadForm.fileSize : new Blob([htmlContent]).size
+  const fileSize = uploadForm.fileSize > 0 ? uploadForm.fileSize : new Blob([body]).size
 
   await uploadHtml({
     subdomain: uploadForm.subdomain.trim(),
     fileName: autoFileName,
     description: uploadForm.description.trim(),
     fileSize,
-    htmlContent
+    htmlContent: body
   })
 
   ElMessage.success('上传成功')
   uploadForm.subdomain = ''
   uploadForm.description = ''
   uploadForm.fileSize = 0
-  uploadForm.htmlContent = ''
+  htmlContent.value = ''
 }
 </script>
 
@@ -252,6 +328,29 @@ const submitUpload = async () => {
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
+}
+
+.html-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.toolbar-btn {
+  padding: 6px 12px;
+  border-radius: var(--hh-radius-sm);
+  border: 1px solid var(--hh-border-2);
+  background: color-mix(in srgb, var(--hh-surface-solid) 92%, rgb(var(--hh-brand-rgb) / 0.06) 8%);
+  color: var(--hh-text);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.toolbar-btn:hover {
+  border-color: rgb(var(--hh-brand-rgb) / 0.22);
+  background: rgb(var(--hh-brand-rgb) / 0.08);
 }
 
 .upload-form textarea {
