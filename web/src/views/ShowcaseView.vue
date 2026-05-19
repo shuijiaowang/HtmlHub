@@ -59,7 +59,10 @@
             </p>
 
             <div class="record-meta">
-              <span>访问 {{ item.visitCount || 0 }} 次</span>
+              <span class="visit-metric" title="访问次数">
+                <el-icon class="metric-icon" aria-hidden="true"><View /></el-icon>
+                {{ item.visitCount || 0 }}
+              </span>
               <span>{{ formatDate(item.createdAt) }}</span>
             </div>
           </article>
@@ -74,6 +77,7 @@ import { onMounted, ref } from 'vue'
 import { getPublicHtmlList, likeHtmlRecord, unlikeHtmlRecord } from '@/api/html'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
+import { View } from '@element-plus/icons-vue'
 
 const htmlPublicHost = import.meta.env.VITE_HTML_PUBLIC_HOST || 'localhost:7789'
 const userStore = useUserStore()
@@ -302,6 +306,19 @@ h1 {
   margin-top: 10px;
   font-size: 12px;
   color: var(--hh-text-3);
+}
+
+.visit-metric {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.metric-icon {
+  width: 1em;
+  height: 1em;
+  font-size: 14px;
+  flex-shrink: 0;
 }
 
 .hint {

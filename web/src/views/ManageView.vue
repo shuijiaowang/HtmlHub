@@ -639,8 +639,28 @@ onMounted(async () => {
     padding: 18px 12px;
   }
 
+  /* 保持三列一行，避免每项独占半屏 */
   .stats-row {
-    grid-template-columns: 1fr;
+    gap: 6px;
+    margin: 12px 0 14px;
+  }
+
+  .stat {
+    padding: 8px 6px;
+    min-width: 0;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .stat-value {
+    font-size: 16px;
+  }
+
+  .stat .metric-icon {
+    font-size: 14px;
   }
 }
 </style>
