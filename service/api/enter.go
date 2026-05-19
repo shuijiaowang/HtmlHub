@@ -10,6 +10,7 @@ type ApiGroup struct {
 	UserApi
 	HTMLRecordApi
 	HTMLRecordDataApi
+	HTMLRecordLikeApi
 }
 
 var (
@@ -17,4 +18,5 @@ var (
 	userService           = service2.UserService{}
 	htmlRecordService     = service2.HTMLRecordService{}
 	htmlRecordDataService = service2.HTMLRecordDataService{}
+	htmlRecordLikeService = service2.HTMLRecordLikeService{}
 )

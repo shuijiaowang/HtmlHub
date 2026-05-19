@@ -73,6 +73,7 @@ func InitDB() error {
 		&model.User{},
 		&model.HtmlRecord{},
 		&model.HtmlRecordData{},
+		&model.HtmlRecordLike{},
 
 		// 其他模型...
 	)

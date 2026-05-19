@@ -26,6 +26,7 @@ func SetupRouter() *gin.Engine {
 	exampleApi := api.ExampleApi{}
 	htmlRecordApi := api.HTMLRecordApi{}
 	htmlRecordDataApi := api.HTMLRecordDataApi{}
+	htmlRecordLikeApi := api.HTMLRecordLikeApi{}
 	//r.GET("/", htmlRecordApi.PublicHTML)
 	// 用户子域上误打开 /home、/index.html 时仍返回注入后的 HTML（与 / 一致，避免落到 Vue 的 history 路由）
 	//r.GET("/home", htmlRecordApi.PublicHTML)
@@ -34,6 +35,8 @@ func SetupRouter() *gin.Engine {
 	r.GET("/", middleware.HighRiskWriteRateLimit(), htmlRecordApi.PublicHTML)
 	r.GET("/home", middleware.HighRiskWriteRateLimit(), htmlRecordApi.PublicHTML)
 	r.GET("/index.html", middleware.HighRiskWriteRateLimit(), htmlRecordApi.PublicHTML)
+	r.GET("/api/html/:id/likes/count", htmlRecordLikeApi.Count)
+
 	apiGroup := r.Group("/api")
 	apiGroup.Use(middleware.JWTInterceptor()) // 应用JWT拦截器
 	{
@@ -54,6 +57,8 @@ func SetupRouter() *gin.Engine {
 			htmlGroup.PUT("/:id/visibility", htmlRecordApi.UpdateVisibility)
 			htmlGroup.POST("/data/save", htmlRecordDataApi.Save)
 			htmlGroup.GET("/data/load", htmlRecordDataApi.Load)
+			htmlGroup.POST("/:id/like", htmlRecordLikeApi.Like)
+			htmlGroup.DELETE("/:id/like", htmlRecordLikeApi.Unlike)
 		}
 		adminGroup := apiGroup.Group("/admin")
 		adminGroup.Use(middleware.AdminInterceptor())
