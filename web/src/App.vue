@@ -50,6 +50,7 @@ watch(
           <router-link to="/home/upload">上传</router-link>
           <router-link to="/home/manage">管理</router-link>
           <router-link to="/home/showcase">展示</router-link>
+          <router-link to="/home/faq">帮助</router-link>
         </nav>
         <div class="right-actions">
           <template v-if="isLoggedIn">

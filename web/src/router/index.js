@@ -35,6 +35,12 @@ const router = createRouter({
             meta: { title: '展示页' }
         },
         {
+            path: '/home/faq',
+            name: 'home-faq',
+            component: () => import('../views/FaqView.vue'),
+            meta: { title: '帮助中心' }
+        },
+        {
             path: '/admin',
             name: 'admin',
             component: () => import('../views/AdminView.vue'),
