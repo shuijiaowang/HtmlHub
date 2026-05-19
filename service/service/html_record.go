@@ -225,6 +225,24 @@ func (s *HTMLRecordService) UpdateVisibilityByUserID(userID, id uint, visibility
 	return record, nil
 }
 
+func (s *HTMLRecordService) UpdatePublishModeByUserID(userID, id uint, publishMode bool) (*model.HtmlRecord, error) {
+	if userID == 0 {
+		return nil, errors.New("用户信息无效")
+	}
+	if id == 0 {
+		return nil, errors.New("记录ID无效")
+	}
+	record, err := dao.FindHTMLRecordByIDAndUserID(id, userID)
+	if err != nil {
+		return nil, errors.New("记录不存在或无权操作")
+	}
+	if err := dao.UpdateHTMLRecordPublishMode(record, publishMode); err != nil {
+		return nil, err
+	}
+	record.PublishMode = publishMode
+	return record, nil
+}
+
 func (s *HTMLRecordService) GetBySubdomain(subdomain string) (*model.HtmlRecord, error) {
 	subdomain = strings.ToLower(strings.TrimSpace(subdomain))
 	if !subdomainReg.MatchString(subdomain) {

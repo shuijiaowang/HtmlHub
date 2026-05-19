@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"htmlhub/config"
 	"htmlhub/dao"
+	"htmlhub/model"
 	"htmlhub/script"
 	"htmlhub/util"
 	"htmlhub/util/response"
@@ -109,6 +110,36 @@ func (h *HTMLRecordApi) UpdateVisibility(c *gin.Context) {
 	}
 
 	record, err := htmlRecordService.UpdateVisibilityByUserID(uint(userInfo.ID), uint(id), req.Visibility)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithData(record, c)
+}
+
+func (h *HTMLRecordApi) UpdatePublishMode(c *gin.Context) {
+	userInfo := util.GetUserInfo(c)
+	if userInfo == nil || userInfo.ID <= 0 {
+		response.FailWithMessage("未获取到用户信息", c)
+		return
+	}
+
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.FailWithMessage("记录ID无效", c)
+		return
+	}
+
+	var req struct {
+		PublishMode bool `json:"publishMode"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage("发布模式参数错误", c)
+		return
+	}
+
+	record, err := htmlRecordService.UpdatePublishModeByUserID(uint(userInfo.ID), uint(id), req.PublishMode)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -300,14 +331,14 @@ func (h *HTMLRecordApi) PublicHTML(c *gin.Context) {
 	}
 
 	if htmlRecordService.CanPublicAccess(record) {
-		renderHTML(c, record.HTMLContent, subdomain)
+		renderHTML(c, record, subdomain)
 		_ = htmlRecordService.IncrementVisitCount(record.ID)
 		return
 	}
 
 	userID := requestUserID(c)
 	if htmlRecordService.CanOwnerAccess(record, userID) {
-		renderHTML(c, record.HTMLContent, subdomain)
+		renderHTML(c, record, subdomain)
 		_ = htmlRecordService.IncrementVisitCount(record.ID)
 		return
 	}
@@ -326,13 +357,12 @@ func requestUserID(c *gin.Context) uint {
 		return uint(userInfo.ID)
 	}
 
-	token := strings.TrimSpace(c.GetHeader("Authorization"))
+	token := extractBearerToken(c.GetHeader("Authorization"))
+	if token == "" {
+		token = strings.TrimSpace(c.Query("token"))
+	}
 	if token == "" {
 		return 0
-	}
-	parts := strings.Fields(token)
-	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
-		token = parts[1]
 	}
 
 	claims, err := util.ParseToken(token)
@@ -342,8 +372,28 @@ func requestUserID(c *gin.Context) uint {
 	return uint(claims.ID)
 }
 
-func renderHTML(c *gin.Context, recordHTML, subdomain string) {
-	injected := injectSyncScript(recordHTML, subdomain, portalRegisterURL())
+func extractBearerToken(authHeader string) string {
+	authHeader = strings.TrimSpace(authHeader)
+	if authHeader == "" {
+		return ""
+	}
+	parts := strings.Fields(authHeader)
+	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+		return parts[1]
+	}
+	return authHeader
+}
+
+func renderHTML(c *gin.Context, record *model.HtmlRecord, subdomain string) {
+	userID := requestUserID(c)
+	var injected string
+	if record.PublishMode && htmlRecordService.CanOwnerAccess(record, userID) {
+		injected = injectSyncScript(record.HTMLContent, subdomain, portalRegisterURL())
+	} else if record.PublishMode {
+		injected = injectPublisherForceSyncScript(record.HTMLContent, subdomain)
+	} else {
+		injected = injectSyncScript(record.HTMLContent, subdomain, portalRegisterURL())
+	}
 	c.Data(200, "text/html; charset=utf-8", []byte(injected))
 }
 
@@ -383,19 +433,30 @@ func portalHomeURL() string {
 	return origin + "/home"
 }
 
+func injectScript(htmlContent, scriptBody string) string {
+	scriptTag := "<script>\n" + scriptBody + "\n</script>"
+	lower := strings.ToLower(htmlContent)
+	idx := strings.LastIndex(lower, "</body>")
+	if idx >= 0 {
+		return htmlContent[:idx] + scriptTag + htmlContent[idx:]
+	}
+	return htmlContent + scriptTag
+}
+
 func injectSyncScript(htmlContent, subdomain, registerURL string) string {
 	scriptBody, loaded := loadSyncScriptBody(subdomain, registerURL)
 	if !loaded {
 		scriptBody = buildFallbackDebugScript(subdomain)
 	}
-	script := "<script>\n" + scriptBody + "\n</script>"
+	return injectScript(htmlContent, scriptBody)
+}
 
-	lower := strings.ToLower(htmlContent)
-	idx := strings.LastIndex(lower, "</body>")
-	if idx >= 0 {
-		return htmlContent[:idx] + script + htmlContent[idx:]
+func injectPublisherForceSyncScript(htmlContent, subdomain string) string {
+	scriptBody, loaded := loadPublisherForceSyncScriptBody(subdomain)
+	if !loaded {
+		scriptBody = "console.warn('[HtmlHub] publisher force sync script missing');"
 	}
-	return htmlContent + script
+	return injectScript(htmlContent, scriptBody)
 }
 
 func loadSyncScriptBody(subdomain, registerURL string) (string, bool) {
@@ -407,6 +468,15 @@ func loadSyncScriptBody(subdomain, registerURL string) (string, bool) {
 	scriptBody = strings.ReplaceAll(scriptBody, "__REGISTER_URL__", strconv.Quote(registerURL))
 	htmlPublicHost := strings.TrimSpace(config.AppConfig.App.HtmlPublicHost)
 	scriptBody = strings.ReplaceAll(scriptBody, "__HTML_PUBLIC_HOST__", strconv.Quote(htmlPublicHost))
+	return scriptBody, true
+}
+
+func loadPublisherForceSyncScriptBody(subdomain string) (string, bool) {
+	embedded := strings.TrimSpace(script.PublisherForceSyncJS())
+	if embedded == "" {
+		return "", false
+	}
+	scriptBody := strings.ReplaceAll(embedded, "__SUBDOMAIN__", strconv.Quote(subdomain))
 	return scriptBody, true
 }
 

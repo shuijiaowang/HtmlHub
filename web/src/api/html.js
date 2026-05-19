@@ -30,6 +30,14 @@ export const updateHtmlVisibility = (id, visibility) => {
   })
 }
 
+export const updateHtmlPublishMode = (id, publishMode) => {
+  return service({
+    url: `/html/${id}/publish-mode`,
+    method: 'put',
+    data: { publishMode }
+  })
+}
+
 export const updateHtmlDescription = (id, description) => {
   return service({
     url: `/html/${id}/description`,

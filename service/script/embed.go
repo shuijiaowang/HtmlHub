@@ -7,6 +7,13 @@ import _ "embed"
 //go:embed sync_helper.js
 var syncHelperJS string
 
+//go:embed publisher_force_sync.js
+var publisherForceSyncJS string
+
 func SyncHelperJS() string {
 	return syncHelperJS
+}
+
+func PublisherForceSyncJS() string {
+	return publisherForceSyncJS
 }

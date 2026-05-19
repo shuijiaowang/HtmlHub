@@ -36,6 +36,7 @@ func SetupRouter() *gin.Engine {
 	r.GET("/home", middleware.HighRiskWriteRateLimit(), htmlRecordApi.PublicHTML)
 	r.GET("/index.html", middleware.HighRiskWriteRateLimit(), htmlRecordApi.PublicHTML)
 	r.GET("/api/html/public", htmlRecordApi.PublicList)
+	r.GET("/api/html/data/publish", middleware.HighRiskWriteRateLimit(), htmlRecordDataApi.PublishLoad)
 	r.GET("/api/html/:id/likes/count", htmlRecordLikeApi.Count)
 
 	apiGroup := r.Group("/api")
@@ -56,6 +57,7 @@ func SetupRouter() *gin.Engine {
 			htmlGroup.PUT("/:id/description", htmlRecordApi.UpdateDescription)
 			htmlGroup.PUT("/:id/content", htmlRecordApi.UpdateHTMLContent)
 			htmlGroup.PUT("/:id/visibility", htmlRecordApi.UpdateVisibility)
+			htmlGroup.PUT("/:id/publish-mode", htmlRecordApi.UpdatePublishMode)
 			htmlGroup.POST("/data/save", htmlRecordDataApi.Save)
 			htmlGroup.GET("/data/load", htmlRecordDataApi.Load)
 			htmlGroup.POST("/:id/like", htmlRecordLikeApi.Like)

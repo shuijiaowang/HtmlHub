@@ -50,3 +50,16 @@ func (h *HTMLRecordDataApi) Load(c *gin.Context) {
 		"dataJson": dataJSON,
 	}, c)
 }
+
+func (h *HTMLRecordDataApi) PublishLoad(c *gin.Context) {
+	subdomain := c.Query("subdomain")
+	dataJSON, err := htmlRecordDataService.PublishLoadBySubdomain(subdomain)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithData(gin.H{
+		"dataJson": dataJSON,
+	}, c)
+}

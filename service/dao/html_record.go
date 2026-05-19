@@ -71,6 +71,10 @@ func UpdateHTMLRecordVisibility(record *model.HtmlRecord, visibility string) err
 	return db.DB.Model(record).Update("visibility", visibility).Error
 }
 
+func UpdateHTMLRecordPublishMode(record *model.HtmlRecord, publishMode bool) error {
+	return db.DB.Model(record).Update("publish_mode", publishMode).Error
+}
+
 func UpdateHTMLRecordApprovalStatus(record *model.HtmlRecord, status string) error {
 	return db.DB.Model(record).Update("approval_status", status).Error
 }

@@ -57,6 +57,7 @@
             <div class="record-meta">
               <span>审核：{{ formatApprovalStatus(item.approvalStatus) }}</span>
               <span>可见性：{{ formatVisibility(item.visibility) }}</span>
+              <span>发布模式：{{ item.publishMode ? '已开启' : '关闭' }}</span>
               <span class="meta-metric" title="访问次数">
                 <el-icon class="metric-icon" aria-hidden="true"><View /></el-icon>
                 {{ item.visitCount || 0 }}
@@ -77,6 +78,9 @@
               <button class="text-btn" type="button" @click="openHtmlDialog(item)">更新 HTML</button>
               <button class="text-btn" @click="toggleVisibility(item)">
                 切换为{{ item.visibility === 'public' ? '私密' : '公开' }}
+              </button>
+              <button class="text-btn" @click="togglePublishMode(item)">
+                {{ item.publishMode ? '关闭发布模式' : '开启发布模式' }}
               </button>
               <button class="text-btn danger-btn" @click="removeRecord(item)">删除</button>
             </div>
@@ -125,7 +129,8 @@ import {
   getMyHtmlList,
   updateHtmlContent,
   updateHtmlDescription,
-  updateHtmlVisibility
+  updateHtmlVisibility,
+  updateHtmlPublishMode
 } from '@/api/html'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
@@ -301,6 +306,17 @@ const toggleVisibility = async (item) => {
   const nextVisibility = item.visibility === 'public' ? 'private' : 'public'
   const res = await updateHtmlVisibility(item.id, nextVisibility)
   item.visibility = res.data?.visibility || nextVisibility
+}
+
+const togglePublishMode = async (item) => {
+  const next = !item.publishMode
+  if (next && item.visibility !== 'public') {
+    const ok = window.confirm('发布模式通常用于公开页面，访客才能读取发布者数据。当前为私密，是否仍要开启？')
+    if (!ok) return
+  }
+  const res = await updateHtmlPublishMode(item.id, next)
+  item.publishMode = res.data?.publishMode ?? next
+  ElMessage.success(next ? '已开启发布模式' : '已关闭发布模式')
 }
 
 const removeRecord = async (item) => {
