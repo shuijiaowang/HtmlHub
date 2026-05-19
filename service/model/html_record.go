@@ -17,4 +17,5 @@ type HtmlRecord struct {
 	Visibility     string `json:"visibility" gorm:"type:varchar(20);not null;default:public;comment:可见性(public/private)"`
 	ApprovalStatus string `json:"approvalStatus" gorm:"type:varchar(20);not null;default:pending;comment:审核状态(pending/approved/rejected)"`
 	VisitCount     int64  `json:"visitCount" gorm:"not null;default:0;comment:访问次数"`
+	LikeCount      int64  `json:"likeCount" gorm:"-"`
 }

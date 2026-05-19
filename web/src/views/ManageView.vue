@@ -11,8 +11,23 @@
         </div>
         <div class="stats-row">
           <div class="stat">
-            <div class="stat-label">总访问次数</div>
+            <div class="stat-label">
+              <el-icon class="metric-icon" aria-hidden="true"><View /></el-icon>
+              <span class="sr-only">总访问次数</span>
+            </div>
             <div class="stat-value">{{ totalVisitCount }}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">
+              <svg class="metric-icon heart-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                />
+              </svg>
+              <span class="sr-only">总点赞次数</span>
+            </div>
+            <div class="stat-value">{{ totalLikeCount }}</div>
           </div>
           <div class="stat">
             <div class="stat-label">记录数</div>
@@ -42,7 +57,19 @@
             <div class="record-meta">
               <span>审核：{{ formatApprovalStatus(item.approvalStatus) }}</span>
               <span>可见性：{{ formatVisibility(item.visibility) }}</span>
-              <span>访问次数：{{ item.visitCount || 0 }}</span>
+              <span class="meta-metric" title="访问次数">
+                <el-icon class="metric-icon" aria-hidden="true"><View /></el-icon>
+                {{ item.visitCount || 0 }}
+              </span>
+              <span class="meta-metric" title="点赞次数">
+                <svg class="metric-icon heart-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                  />
+                </svg>
+                {{ item.likeCount || 0 }}
+              </span>
               <span>创建时间：{{ formatDate(item.createdAt) }}</span>
             </div>
             <div class="record-actions">
@@ -102,6 +129,7 @@ import {
 } from '@/api/html'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
+import { View } from '@element-plus/icons-vue'
 
 /** 子域名 HTML 访问用 host，本地与线上由 Vite 环境变量区分 */
 const htmlPublicHost = import.meta.env.VITE_HTML_PUBLIC_HOST || 'localhost:7789'
@@ -235,6 +263,10 @@ const saveHtmlContent = async () => {
 
 const totalVisitCount = computed(() => {
   return records.value.reduce((total, item) => total + (Number(item.visitCount) || 0), 0)
+})
+
+const totalLikeCount = computed(() => {
+  return records.value.reduce((total, item) => total + (Number(item.likeCount) || 0), 0)
 })
 
 const loadRecords = async () => {
@@ -393,7 +425,7 @@ onMounted(async () => {
 
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin: 14px 0 16px;
 }
@@ -406,8 +438,40 @@ onMounted(async () => {
 }
 
 .stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12px;
   color: var(--hh-text-3);
+}
+
+.metric-icon {
+  width: 1em;
+  height: 1em;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.heart-icon {
+  color: #e85d6a;
+}
+
+.meta-metric {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .stat-value {

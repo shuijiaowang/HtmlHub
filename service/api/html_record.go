@@ -271,6 +271,26 @@ func (h *HTMLRecordApi) AdminUpdateSubdomain(c *gin.Context) {
 	response.OkWithData(record, c)
 }
 
+func (h *HTMLRecordApi) PublicList(c *gin.Context) {
+	sort := c.DefaultQuery("sort", "latest")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	userID := requestUserID(c)
+
+	list, total, err := htmlRecordService.PublicList(sort, userID, page, pageSize)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithData(gin.H{
+		"list":     list,
+		"total":    total,
+		"page":     page,
+		"pageSize": pageSize,
+	}, c)
+}
+
 func (h *HTMLRecordApi) PublicHTML(c *gin.Context) {
 	subdomain := extractSubdomain(c.Request.Host)
 	record, err := htmlRecordService.GetBySubdomain(subdomain)

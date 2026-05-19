@@ -45,3 +45,26 @@ export const updateHtmlContent = (id, htmlContent) => {
     data: { htmlContent }
   })
 }
+
+export const getPublicHtmlList = (params) => {
+  return service({
+    url: '/html/public',
+    method: 'get',
+    params,
+    donNotShowLoading: true
+  })
+}
+
+export const likeHtmlRecord = (id) => {
+  return service({
+    url: `/html/${id}/like`,
+    method: 'post'
+  })
+}
+
+export const unlikeHtmlRecord = (id) => {
+  return service({
+    url: `/html/${id}/like`,
+    method: 'delete'
+  })
+}

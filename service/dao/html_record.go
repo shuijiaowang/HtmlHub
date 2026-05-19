@@ -15,7 +15,22 @@ func CreateHTMLRecord(record *model.HtmlRecord) error {
 func ListHTMLRecordsByUserID(userID uint) ([]model.HtmlRecord, error) {
 	var records []model.HtmlRecord
 	err := db.DB.Where("user_id = ?", userID).Order("id DESC").Find(&records).Error
-	return records, err
+	if err != nil || len(records) == 0 {
+		return records, err
+	}
+
+	ids := make([]uint, len(records))
+	for i := range records {
+		ids[i] = records[i].ID
+	}
+	likeCounts, err := CountHTMLRecordLikesByRecordIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+	for i := range records {
+		records[i].LikeCount = likeCounts[records[i].ID]
+	}
+	return records, nil
 }
 
 func CountHTMLRecordsByUserID(userID uint) (int64, error) {
@@ -133,6 +148,64 @@ func GetHTMLRecordForAdmin(id uint) (*AdminHTMLRecordRow, error) {
 		Where("html_record.id = ? AND html_record.deleted_at IS NULL", id).
 		First(&record).Error
 	return &record, err
+}
+
+type PublicHTMLRecordRow struct {
+	ID          uint      `json:"id"`
+	UserID      uint      `json:"userId"`
+	Nickname    string    `json:"nickname"`
+	Subdomain   string    `json:"subdomain"`
+	Description string    `json:"description"`
+	VisitCount  int64     `json:"visitCount"`
+	LikeCount   int64     `json:"likeCount" gorm:"column:like_count"`
+	Liked       bool      `json:"liked" gorm:"-"`
+	CreatedAt   time.Time `json:"createdAt"`
+}
+
+func ListHTMLRecordsPublic(sort string, viewerUserID uint, page, pageSize int) ([]PublicHTMLRecordRow, int64, error) {
+	query := db.DB.Table("html_record").
+		Select(`html_record.id, html_record.user_id, u.nickname, html_record.subdomain,
+			html_record.description, html_record.visit_count, html_record.created_at,
+			(SELECT COUNT(*) FROM html_record_like WHERE html_record_id = html_record.id AND deleted_at IS NULL) AS like_count`).
+		Joins("LEFT JOIN `user` AS u ON u.id = html_record.user_id").
+		Where("html_record.deleted_at IS NULL").
+		Where("html_record.visibility = ?", "public").
+		Where("html_record.approval_status <> ?", model.HTMLApprovalRejected)
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	orderClause := "html_record.id DESC"
+	if sort == "likes" {
+		orderClause = "like_count DESC, html_record.id DESC"
+	}
+
+	var records []PublicHTMLRecordRow
+	err := query.Order(orderClause).
+		Offset((page - 1) * pageSize).
+		Limit(pageSize).
+		Find(&records).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	if viewerUserID == 0 || len(records) == 0 {
+		return records, total, nil
+	}
+
+	ids := make([]uint, len(records))
+	for i := range records {
+		ids[i] = records[i].ID
+	}
+	likedMap, err := FindLikedHTMLRecordIDsByUser(viewerUserID, ids)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := range records {
+		records[i].Liked = likedMap[records[i].ID]
+	}
+	return records, total, nil
 }
 
 func applyAdminHTMLFilters(query *gorm.DB, params AdminHTMLRecordQuery) *gorm.DB {

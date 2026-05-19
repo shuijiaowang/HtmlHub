@@ -254,6 +254,20 @@ func (s *HTMLRecordService) IncrementVisitCount(recordID uint) error {
 	return dao.IncrementHTMLRecordVisitCount(recordID)
 }
 
+func (s *HTMLRecordService) PublicList(sort string, userID uint, page, pageSize int) ([]dao.PublicHTMLRecordRow, int64, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 || pageSize > 100 {
+		pageSize = 20
+	}
+	sort = strings.TrimSpace(sort)
+	if sort != "likes" {
+		sort = "latest"
+	}
+	return dao.ListHTMLRecordsPublic(sort, userID, page, pageSize)
+}
+
 func (s *HTMLRecordService) AdminList(params dao.AdminHTMLRecordQuery) ([]dao.AdminHTMLRecordRow, int64, error) {
 	if params.Page <= 0 {
 		params.Page = 1

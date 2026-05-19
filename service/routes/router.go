@@ -35,6 +35,7 @@ func SetupRouter() *gin.Engine {
 	r.GET("/", middleware.HighRiskWriteRateLimit(), htmlRecordApi.PublicHTML)
 	r.GET("/home", middleware.HighRiskWriteRateLimit(), htmlRecordApi.PublicHTML)
 	r.GET("/index.html", middleware.HighRiskWriteRateLimit(), htmlRecordApi.PublicHTML)
+	r.GET("/api/html/public", htmlRecordApi.PublicList)
 	r.GET("/api/html/:id/likes/count", htmlRecordLikeApi.Count)
 
 	apiGroup := r.Group("/api")
