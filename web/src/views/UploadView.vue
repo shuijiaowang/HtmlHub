@@ -23,12 +23,39 @@
                 <span class="label">简介（可选）</span>
                 <input v-model="uploadForm.description" maxlength="500" placeholder="写一点介绍（方便后续管理）">
               </label>
-              <label class="field field-file">
-                <span class="label">选择本地 HTML 文件（可选）</span>
-                <span class="file-row">
-                  <input class="file" type="file" accept=".html,text/html" @change="onSelectFile">
-                </span>
-              </label>
+              <div class="field field-file">
+                <span class="label">本地 HTML 文件（可选）</span>
+                <span class="hint">支持拖拽 .html 文件到下方区域，或点击选择；内容会自动填入右侧编辑器</span>
+                <div
+                  class="drop-zone"
+                  :class="{ 'drop-zone--active': isDragOver, 'drop-zone--filled': selectedFileName }"
+                  role="button"
+                  tabindex="0"
+                  aria-label="拖拽或点击上传 HTML 文件"
+                  @click="openFilePicker"
+                  @keydown.enter.prevent="openFilePicker"
+                  @keydown.space.prevent="openFilePicker"
+                  @dragenter.prevent="onDragEnter"
+                  @dragover.prevent="onDragOver"
+                  @dragleave.prevent="onDragLeave"
+                  @drop.prevent="onDrop"
+                >
+                  <input
+                    ref="fileInputRef"
+                    class="file-input-hidden"
+                    type="file"
+                    accept=".html,text/html"
+                    @change="onSelectFile"
+                  >
+                  <span class="drop-zone-icon" aria-hidden="true">📄</span>
+                  <span class="drop-zone-title">
+                    {{ selectedFileName ? selectedFileName : '拖拽 HTML 文件到此处' }}
+                  </span>
+                  <span class="drop-zone-desc">
+                    {{ selectedFileName ? '已载入，可重新拖拽或点击更换文件' : '或点击此区域选择文件 · 仅支持 .html' }}
+                  </span>
+                </div>
+              </div>
               <div class="actions">
                 <button class="primary-btn" type="submit">上传</button>
                 <span class="mini">上传后可在“管理”里编辑简介、更新 HTML、切换公开/私密。</span>
@@ -76,6 +103,9 @@ const uploadForm = reactive({
 /** 大段 HTML 单独 ref，减少与表单其余字段的响应式耦合 */
 const htmlContent = ref('')
 const htmlTextareaRef = ref(null)
+const fileInputRef = ref(null)
+const isDragOver = ref(false)
+const selectedFileName = ref('')
 
 const userStore = useUserStore()
 
@@ -151,12 +181,53 @@ onMounted(() => {
   }, 3000)
 })
 
+const isHtmlFile = (file) => {
+  if (!file) return false
+  const name = file.name.toLowerCase()
+  return name.endsWith('.html') || file.type === 'text/html'
+}
+
+const loadHtmlFile = async (file) => {
+  if (!isHtmlFile(file)) {
+    ElMessage.warning('仅支持 .html 文件，请重新选择')
+    return
+  }
+  uploadForm.fileSize = file.size
+  selectedFileName.value = file.name
+  htmlContent.value = await file.text()
+  afterHtmlValueUpdate()
+  ElMessage.success(`已载入：${file.name}`)
+}
+
+const openFilePicker = () => {
+  fileInputRef.value?.click()
+}
+
 const onSelectFile = async (event) => {
   const file = event.target.files?.[0]
   if (!file) return
-  uploadForm.fileSize = file.size
-  htmlContent.value = await file.text()
-  afterHtmlValueUpdate()
+  await loadHtmlFile(file)
+  event.target.value = ''
+}
+
+const onDragEnter = () => {
+  isDragOver.value = true
+}
+
+const onDragOver = () => {
+  isDragOver.value = true
+}
+
+const onDragLeave = (event) => {
+  if (event.currentTarget?.contains(event.relatedTarget)) return
+  isDragOver.value = false
+}
+
+const onDrop = async (event) => {
+  isDragOver.value = false
+  const file = event.dataTransfer?.files?.[0]
+  if (!file) return
+  await loadHtmlFile(file)
 }
 
 const generateAutoFileName = () => {
@@ -196,6 +267,7 @@ const submitUpload = async () => {
   uploadForm.description = ''
   uploadForm.fileSize = 0
   htmlContent.value = ''
+  selectedFileName.value = ''
 }
 </script>
 
@@ -286,8 +358,7 @@ const submitUpload = async () => {
 }
 
 .upload-form input,
-.upload-form textarea,
-.upload-form .file {
+.upload-form textarea {
   width: 100%;
   border: 1px solid var(--hh-border-2);
   border-radius: var(--hh-radius-sm);
@@ -295,39 +366,57 @@ const submitUpload = async () => {
   background: color-mix(in srgb, var(--hh-surface-solid) 94%, #000 0%);
 }
 
-.field-file .file-row {
-  display: block;
+.file-input-hidden {
+  display: none;
 }
 
-.upload-form input.file[type='file'] {
-  padding: 8px 10px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.upload-form input.file::file-selector-button {
-  margin-right: 12px;
-  padding: 8px 14px;
+.drop-zone {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 22px 16px;
+  border: 1.5px dashed var(--hh-border-2);
   border-radius: var(--hh-radius-sm);
-  border: 1px solid rgb(var(--hh-brand-rgb) / 0.22);
-  background: rgb(var(--hh-brand-rgb) / 0.10);
-  color: color-mix(in srgb, var(--hh-brand) 88%, var(--hh-text) 12%);
-  font-weight: 600;
-  font-size: 14px;
-  font-family: inherit;
+  background: color-mix(in srgb, var(--hh-surface-solid) 96%, rgb(var(--hh-brand-rgb) / 0.04) 4%);
   cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
-.upload-form input.file::-webkit-file-upload-button {
-  margin-right: 12px;
-  padding: 8px 14px;
-  border-radius: var(--hh-radius-sm);
-  border: 1px solid rgb(var(--hh-brand-rgb) / 0.22);
+.drop-zone:hover,
+.drop-zone:focus-visible {
+  border-color: rgb(var(--hh-brand-rgb) / 0.35);
+  background: rgb(var(--hh-brand-rgb) / 0.06);
+  outline: none;
+}
+
+.drop-zone--active {
+  border-color: var(--hh-brand);
   background: rgb(var(--hh-brand-rgb) / 0.10);
-  color: color-mix(in srgb, var(--hh-brand) 88%, var(--hh-text) 12%);
-  font-weight: 600;
+  box-shadow: 0 0 0 3px rgb(var(--hh-brand-rgb) / 0.12);
+}
+
+.drop-zone--filled {
+  border-style: solid;
+  border-color: rgb(var(--hh-brand-rgb) / 0.28);
+}
+
+.drop-zone-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.drop-zone-title {
   font-size: 14px;
-  cursor: pointer;
+  font-weight: 600;
+  color: var(--hh-text);
+  word-break: break-all;
+}
+
+.drop-zone-desc {
+  font-size: 12px;
+  color: var(--hh-text-3);
+  line-height: 1.4;
 }
 
 .html-toolbar {
