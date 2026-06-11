@@ -50,11 +50,12 @@ watch(
           <router-link to="/home/upload">上传</router-link>
           <router-link to="/home/manage">管理</router-link>
           <router-link to="/home/showcase">展示</router-link>
+          <router-link to="/home/footprints">足迹</router-link>
           <router-link to="/home/faq">帮助</router-link>
         </nav>
         <div class="right-actions">
           <template v-if="isLoggedIn">
-            <span class="nickname" :title="displayNickname">{{ displayNickname }}</span>
+            <router-link class="nickname" to="/home/profile" :title="`${displayNickname}（个人中心）`">{{ displayNickname }}</router-link>
             <button type="button" class="ghost-btn nav-logout" @click="logout">退出</button>
           </template>
           <template v-else>
@@ -173,6 +174,17 @@ watch(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.nickname:hover {
+  text-decoration: none;
+  color: var(--hh-text);
+  background: rgb(var(--hh-brand-rgb) / 0.10);
+  border-color: rgb(var(--hh-brand-rgb) / 0.18);
 }
 
 .ghost-btn,

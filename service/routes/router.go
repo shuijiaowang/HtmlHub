@@ -47,19 +47,30 @@ func SetupRouter() *gin.Engine {
 		{
 			exampleGroup.POST("/test", exampleApi.Test)
 		}
+		// 当前用户自助路由（个人中心）
+		userAuthGroup := apiGroup.Group("/user")
+		{
+			userAuthGroup.GET("/profile", userApi.Profile)
+			userAuthGroup.PUT("/profile", userApi.UpdateProfile)
+		}
 		// 路由（需要认证）
 		htmlGroup := apiGroup.Group("/html")
 		htmlGroup.Use(middleware.HighRiskWriteRateLimit())
 		{
 			htmlGroup.POST("/upload", htmlRecordApi.Upload)
 			htmlGroup.GET("/my", htmlRecordApi.MyList)
+			htmlGroup.GET("/liked", htmlRecordLikeApi.MyLikes)
+			htmlGroup.POST("/data/save", htmlRecordDataApi.Save)
+			htmlGroup.GET("/data/load", htmlRecordDataApi.Load)
+			htmlGroup.GET("/data/my", htmlRecordDataApi.MyDataList)
+			htmlGroup.DELETE("/data/my", htmlRecordDataApi.ClearMyData)
+			htmlGroup.GET("/data/my/:id/export", htmlRecordDataApi.ExportMyData)
+			htmlGroup.DELETE("/data/my/:id", htmlRecordDataApi.DeleteMyData)
 			htmlGroup.DELETE("/:id", htmlRecordApi.Delete)
 			htmlGroup.PUT("/:id/description", htmlRecordApi.UpdateDescription)
 			htmlGroup.PUT("/:id/content", htmlRecordApi.UpdateHTMLContent)
 			htmlGroup.PUT("/:id/visibility", htmlRecordApi.UpdateVisibility)
 			htmlGroup.PUT("/:id/publish-mode", htmlRecordApi.UpdatePublishMode)
-			htmlGroup.POST("/data/save", htmlRecordDataApi.Save)
-			htmlGroup.GET("/data/load", htmlRecordDataApi.Load)
 			htmlGroup.POST("/:id/like", htmlRecordLikeApi.Like)
 			htmlGroup.DELETE("/:id/like", htmlRecordLikeApi.Unlike)
 		}

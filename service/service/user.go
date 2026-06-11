@@ -67,6 +67,80 @@ func (s *UserService) Login(email, password string) (*model.User, bool) {
 	return user, true
 }
 
+// UserProfile 个人中心展示数据：基础信息 + 限制 + 用量统计。
+type UserProfile struct {
+	ID                   uint   `json:"id"`
+	Nickname             string `json:"nickname"`
+	Email                string `json:"email"`
+	UUID                 string `json:"uuid"`
+	Role                 string `json:"role"`
+	CreatedAt            string `json:"createdAt"`
+	MaxHTMLContentBytes  int64  `json:"maxHtmlContentBytes"`
+	MaxHTMLDataBytes     int64  `json:"maxHtmlDataBytes"`
+	MaxActiveHTMLRecords int64  `json:"maxActiveHtmlRecords"`
+	MaxTotalHTMLRecords  int64  `json:"maxTotalHtmlRecords"`
+	ActiveUploadCount    int64  `json:"activeUploadCount"`
+	TotalUploadCount     int64  `json:"totalUploadCount"`
+	ActiveHTMLBytes      int64  `json:"activeHtmlBytes"`
+	HTMLDataBytes        int64  `json:"htmlDataBytes"`
+}
+
+// GetProfile 返回当前用户的个人中心数据。
+func (s *UserService) GetProfile(userID uint) (*UserProfile, error) {
+	if userID == 0 {
+		return nil, errors.New("用户信息无效")
+	}
+	user, err := dao.FindUserByID(userID)
+	if err != nil || user == nil || user.ID == 0 {
+		return nil, errors.New("用户不存在")
+	}
+	usage, err := dao.GetUserUsage(userID)
+	if err != nil {
+		return nil, err
+	}
+	return &UserProfile{
+		ID:                   user.ID,
+		Nickname:             user.Nickname,
+		Email:                user.Email,
+		UUID:                 user.UUID,
+		Role:                 user.Role,
+		CreatedAt:            user.CreatedAt.Format("2006-01-02 15:04:05"),
+		MaxHTMLContentBytes:  user.MaxHTMLContentBytes,
+		MaxHTMLDataBytes:     user.MaxHTMLDataBytes,
+		MaxActiveHTMLRecords: user.MaxActiveHTMLRecords,
+		MaxTotalHTMLRecords:  user.MaxTotalHTMLRecords,
+		ActiveUploadCount:    usage.ActiveUploadCount,
+		TotalUploadCount:     usage.TotalUploadCount,
+		ActiveHTMLBytes:      usage.ActiveHTMLBytes,
+		HTMLDataBytes:        usage.HTMLDataBytes,
+	}, nil
+}
+
+// UpdateNickname 用户自助修改昵称（保持唯一）。
+func (s *UserService) UpdateNickname(userID uint, nickname string) (string, error) {
+	if userID == 0 {
+		return "", errors.New("用户信息无效")
+	}
+	nickname = strings.TrimSpace(nickname)
+	if len([]rune(nickname)) < 2 || len([]rune(nickname)) > 20 {
+		return "", errors.New("昵称长度需为2-20位")
+	}
+	user, err := dao.FindUserByID(userID)
+	if err != nil || user == nil || user.ID == 0 {
+		return "", errors.New("用户不存在")
+	}
+	if nickname == user.Nickname {
+		return nickname, nil
+	}
+	if existing, e := dao.FindUserByNickname(nickname); e == nil && existing != nil && existing.ID != userID {
+		return "", errors.New("昵称已存在")
+	}
+	if err := dao.UpdateUserFields(userID, map[string]interface{}{"nickname": nickname}); err != nil {
+		return "", errors.New("昵称更新失败，请重试")
+	}
+	return nickname, nil
+}
+
 type AdminUserListItem struct {
 	ID                   uint   `json:"id"`
 	Nickname             string `json:"nickname"`

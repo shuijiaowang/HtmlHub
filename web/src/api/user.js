@@ -23,15 +23,23 @@ export const register = (data) => {
     })
 }
 
-// @Summary 获取用户信息
+// @Summary 获取个人中心资料（信息 + 限制 + 用量）
 // @Security ApiKeyAuth
-// @accept application/json
-// @Produce application/json
-// @Success 200 {string} json "{"success":true,"data":{},"msg":"获取成功"}"
-// @Router /user/getUserInfo [get]
-export const getUserInfo = () => {
+// @Router /user/profile [get]
+export const getUserProfile = () => {
     return service({
-        url: '/user/getUserInfo',
+        url: '/user/profile',
         method: 'get'
+    })
+}
+
+// @Summary 修改个人资料（昵称）
+// @Security ApiKeyAuth
+// @Router /user/profile [put]
+export const updateUserProfile = (data) => {
+    return service({
+        url: '/user/profile',
+        method: 'put',
+        data
     })
 }

@@ -54,6 +54,29 @@ type AdminUserRow struct {
 	HTMLDataBytes        int64
 }
 
+// UserUsageRow 单个用户的用量统计（与 ListUsersForAdmin 中的子查询保持一致）
+type UserUsageRow struct {
+	ActiveUploadCount int64
+	TotalUploadCount  int64
+	ActiveHTMLBytes   int64
+	HTMLDataBytes     int64
+}
+
+// GetUserUsage 计算单个用户的页面数量与字节占用，用于个人中心展示。
+func GetUserUsage(userID uint) (*UserUsageRow, error) {
+	var usage UserUsageRow
+	err := db.DB.Table("`user` AS u").
+		Select(`
+			COALESCE((SELECT COUNT(*) FROM html_record WHERE html_record.user_id = u.id AND html_record.deleted_at IS NULL), 0) AS active_upload_count,
+			COALESCE((SELECT COUNT(*) FROM html_record WHERE html_record.user_id = u.id), 0) AS total_upload_count,
+			COALESCE((SELECT SUM(file_size) FROM html_record WHERE html_record.user_id = u.id AND html_record.deleted_at IS NULL), 0) AS active_html_bytes,
+			COALESCE((SELECT SUM(CHAR_LENGTH(data_json)) FROM html_record_data WHERE html_record_data.user_id = u.id AND html_record_data.deleted_at IS NULL), 0) AS html_data_bytes
+		`).
+		Where("u.id = ?", userID).
+		Scan(&usage).Error
+	return &usage, err
+}
+
 func ListUsersForAdmin(page, pageSize int) ([]AdminUserRow, int64, error) {
 	var total int64
 	var users []AdminUserRow

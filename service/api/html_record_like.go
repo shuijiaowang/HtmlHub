@@ -53,6 +53,21 @@ func (h *HTMLRecordLikeApi) Unlike(c *gin.Context) {
 	response.OkWithData(gin.H{"liked": false}, c)
 }
 
+// MyLikes 当前用户点赞过的页面列表（足迹页「我的点赞」标签）。
+func (h *HTMLRecordLikeApi) MyLikes(c *gin.Context) {
+	userInfo := util.GetUserInfo(c)
+	if userInfo == nil || userInfo.ID <= 0 {
+		response.FailWithMessage("未获取到用户信息", c)
+		return
+	}
+	rows, err := htmlRecordLikeService.ListMyLikes(uint(userInfo.ID))
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(gin.H{"list": rows}, c)
+}
+
 func (h *HTMLRecordLikeApi) Count(c *gin.Context) {
 	htmlRecordID, ok := parseHTMLRecordID(c)
 	if !ok {

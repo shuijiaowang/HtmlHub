@@ -58,6 +58,21 @@ func (s *HTMLRecordLikeService) Unlike(userID, htmlRecordID uint) error {
 	return dao.SoftDeleteHTMLRecordLike(like)
 }
 
+// ListMyLikes 返回当前用户点赞过且仍存在的页面列表。
+func (s *HTMLRecordLikeService) ListMyLikes(userID uint) ([]dao.LikedHTMLRecordRow, error) {
+	if userID == 0 {
+		return nil, errors.New("用户信息无效")
+	}
+	rows, err := dao.ListLikedHTMLRecordsByUser(userID)
+	if err != nil {
+		return nil, err
+	}
+	if rows == nil {
+		rows = []dao.LikedHTMLRecordRow{}
+	}
+	return rows, nil
+}
+
 func (s *HTMLRecordLikeService) Count(htmlRecordID uint) (int64, error) {
 	if htmlRecordID == 0 {
 		return 0, errors.New("记录ID无效")

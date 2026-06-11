@@ -78,6 +78,43 @@ func (h *UserApi) Login(c *gin.Context) {
 	}, c)
 }
 
+// Profile 获取当前登录用户的个人中心数据（信息 + 限制 + 用量）。
+func (h *UserApi) Profile(c *gin.Context) {
+	userInfo := util.GetUserInfo(c)
+	if userInfo == nil || userInfo.ID <= 0 {
+		response.FailWithMessage("未获取到用户信息", c)
+		return
+	}
+	profile, err := userService.GetProfile(uint(userInfo.ID))
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithData(profile, c)
+}
+
+// UpdateProfile 当前用户自助修改资料（目前支持昵称）。
+func (h *UserApi) UpdateProfile(c *gin.Context) {
+	userInfo := util.GetUserInfo(c)
+	if userInfo == nil || userInfo.ID <= 0 {
+		response.FailWithMessage("未获取到用户信息", c)
+		return
+	}
+	var req struct {
+		Nickname string `json:"nickname" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage("参数错误", c)
+		return
+	}
+	nickname, err := userService.UpdateNickname(uint(userInfo.ID), req.Nickname)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithDetailed(gin.H{"nickname": nickname}, "昵称已更新", c)
+}
+
 func (h *UserApi) AdminList(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))

@@ -76,3 +76,38 @@ export const unlikeHtmlRecord = (id) => {
     method: 'delete'
   })
 }
+
+export const getMyLikedList = () => {
+  return service({
+    url: '/html/liked',
+    method: 'get'
+  })
+}
+
+export const getMySyncDataList = () => {
+  return service({
+    url: '/html/data/my',
+    method: 'get'
+  })
+}
+
+export const exportMySyncData = (id) => {
+  return service({
+    url: `/html/data/my/${id}/export`,
+    method: 'get'
+  })
+}
+
+export const deleteMySyncData = (id) => {
+  return service({
+    url: `/html/data/my/${id}`,
+    method: 'delete'
+  })
+}
+
+export const clearMySyncData = () => {
+  return service({
+    url: '/html/data/my',
+    method: 'delete'
+  })
+}

@@ -35,6 +35,18 @@ const router = createRouter({
             meta: { title: '展示页' }
         },
         {
+            path: '/home/profile',
+            name: 'home-profile',
+            component: () => import('../views/ProfileView.vue'),
+            meta: { title: '个人中心' }
+        },
+        {
+            path: '/home/footprints',
+            name: 'home-footprints',
+            component: () => import('../views/FootprintsView.vue'),
+            meta: { title: '我的足迹' }
+        },
+        {
             path: '/home/faq',
             name: 'home-faq',
             component: () => import('../views/FaqView.vue'),
