@@ -30,6 +30,15 @@ func SoftDeleteHTMLRecordLike(like *model.HtmlRecordLike) error {
 	return db.DB.Delete(like).Error
 }
 
+func HardDeleteHTMLRecordLikesByHTMLRecordID(htmlRecordID uint) error {
+	if htmlRecordID == 0 {
+		return nil
+	}
+	return db.DB.Unscoped().
+		Where("html_record_id = ?", htmlRecordID).
+		Delete(&model.HtmlRecordLike{}).Error
+}
+
 func CountHTMLRecordLikes(htmlRecordID uint) (int64, error) {
 	var count int64
 	err := db.DB.Model(&model.HtmlRecordLike{}).Where("html_record_id = ?", htmlRecordID).Count(&count).Error

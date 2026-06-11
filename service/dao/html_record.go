@@ -33,9 +33,42 @@ func ListHTMLRecordsByUserID(userID uint) ([]model.HtmlRecord, error) {
 	return records, nil
 }
 
+func ListDeletedHTMLRecordsByUserID(userID uint) ([]model.HtmlRecord, error) {
+	var records []model.HtmlRecord
+	err := db.DB.Unscoped().
+		Where("user_id = ? AND deleted_at IS NOT NULL", userID).
+		Order("deleted_at DESC, id DESC").
+		Find(&records).Error
+	if err != nil || len(records) == 0 {
+		return records, err
+	}
+
+	ids := make([]uint, len(records))
+	for i := range records {
+		ids[i] = records[i].ID
+	}
+	likeCounts, err := CountHTMLRecordLikesByRecordIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+	for i := range records {
+		records[i].LikeCount = likeCounts[records[i].ID]
+	}
+	return records, nil
+}
+
 func CountHTMLRecordsByUserID(userID uint) (int64, error) {
 	var count int64
 	err := db.DB.Model(&model.HtmlRecord{}).Where("user_id = ?", userID).Count(&count).Error
+	return count, err
+}
+
+func CountDeletedHTMLRecordsByUserID(userID uint) (int64, error) {
+	var count int64
+	err := db.DB.Unscoped().
+		Model(&model.HtmlRecord{}).
+		Where("user_id = ? AND deleted_at IS NOT NULL", userID).
+		Count(&count).Error
 	return count, err
 }
 
@@ -57,6 +90,14 @@ func FindHTMLRecordByIDAndUserID(id, userID uint) (*model.HtmlRecord, error) {
 	return &record, err
 }
 
+func FindDeletedHTMLRecordByIDAndUserID(id, userID uint) (*model.HtmlRecord, error) {
+	var record model.HtmlRecord
+	err := db.DB.Unscoped().
+		Where("id = ? AND user_id = ? AND deleted_at IS NOT NULL", id, userID).
+		First(&record).Error
+	return &record, err
+}
+
 func FindHTMLRecordByID(id uint) (*model.HtmlRecord, error) {
 	var record model.HtmlRecord
 	err := db.DB.Where("id = ?", id).First(&record).Error
@@ -65,6 +106,14 @@ func FindHTMLRecordByID(id uint) (*model.HtmlRecord, error) {
 
 func SoftDeleteHTMLRecord(record *model.HtmlRecord) error {
 	return db.DB.Delete(record).Error
+}
+
+func RestoreHTMLRecord(record *model.HtmlRecord) error {
+	return db.DB.Unscoped().Model(record).Update("deleted_at", nil).Error
+}
+
+func HardDeleteHTMLRecord(record *model.HtmlRecord) error {
+	return db.DB.Unscoped().Delete(record).Error
 }
 
 func UpdateHTMLRecordVisibility(record *model.HtmlRecord, visibility string) error {

@@ -15,9 +15,30 @@ export const getMyHtmlList = () => {
   })
 }
 
+export const getMyHtmlRecycleList = () => {
+  return service({
+    url: '/html/my/recycle',
+    method: 'get'
+  })
+}
+
 export const deleteHtmlRecord = (id) => {
   return service({
     url: `/html/${id}`,
+    method: 'delete'
+  })
+}
+
+export const restoreHtmlRecord = (id) => {
+  return service({
+    url: `/html/${id}/restore`,
+    method: 'put'
+  })
+}
+
+export const hardDeleteHtmlRecord = (id) => {
+  return service({
+    url: `/html/${id}/hard`,
     method: 'delete'
   })
 }

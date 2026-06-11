@@ -46,7 +46,7 @@
             <div v-else class="record-list">
               <article v-for="item in dataList" :key="item.id" class="record-item">
                 <div class="record-head">
-                  <strong>{{ item.fileName || item.subdomain }}</strong>
+                  <strong>{{ item.subdomain }}</strong>
                   <span>{{ formatBytes(item.dataBytes) }}</span>
                 </div>
                 <p class="record-route">
@@ -282,7 +282,7 @@ const exportData = async (item) => {
       ElMessage.warning('暂无可导出的数据')
       return
     }
-    const base = item.subdomain || item.fileName || `data-${item.id}`
+    const base = item.subdomain || `data-${item.id}`
     downloadJson(`${base}.json`, json)
     ElMessage.success('已开始下载')
   } finally {
@@ -293,7 +293,7 @@ const exportData = async (item) => {
 const removeData = async (item) => {
   try {
     await ElMessageBox.confirm(
-      `确定删除「${item.fileName || item.subdomain}」的云同步数据吗？该操作不可恢复。`,
+      `确定删除「${item.subdomain}」的云同步数据吗？该操作不可恢复。`,
       '删除同步数据',
       { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
     )

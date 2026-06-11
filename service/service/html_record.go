@@ -140,6 +140,13 @@ func (s *HTMLRecordService) ListByUserID(userID uint) ([]model.HtmlRecord, error
 	return dao.ListHTMLRecordsByUserID(userID)
 }
 
+func (s *HTMLRecordService) ListRecycleByUserID(userID uint) ([]model.HtmlRecord, error) {
+	if userID == 0 {
+		return nil, errors.New("用户信息无效")
+	}
+	return dao.ListDeletedHTMLRecordsByUserID(userID)
+}
+
 func (s *HTMLRecordService) DeleteByUserID(userID, id uint) error {
 	if userID == 0 {
 		return errors.New("用户信息无效")
@@ -152,6 +159,48 @@ func (s *HTMLRecordService) DeleteByUserID(userID, id uint) error {
 		return errors.New("记录不存在或无权操作")
 	}
 	return dao.SoftDeleteHTMLRecord(record)
+}
+
+func (s *HTMLRecordService) RestoreByUserID(userID, id uint) error {
+	if userID == 0 {
+		return errors.New("用户信息无效")
+	}
+	if id == 0 {
+		return errors.New("记录ID无效")
+	}
+	limits := getHTMLRecordLimits(userID)
+	activeCount, err := dao.CountHTMLRecordsByUserID(userID)
+	if err != nil {
+		return err
+	}
+	if activeCount >= limits.MaxActiveUploads {
+		return fmt.Errorf("未删除上传数量已达%d个，请先删除后再恢复", limits.MaxActiveUploads)
+	}
+	record, err := dao.FindDeletedHTMLRecordByIDAndUserID(id, userID)
+	if err != nil {
+		return errors.New("回收站记录不存在或无权操作")
+	}
+	return dao.RestoreHTMLRecord(record)
+}
+
+func (s *HTMLRecordService) HardDeleteByUserID(userID, id uint) error {
+	if userID == 0 {
+		return errors.New("用户信息无效")
+	}
+	if id == 0 {
+		return errors.New("记录ID无效")
+	}
+	record, err := dao.FindDeletedHTMLRecordByIDAndUserID(id, userID)
+	if err != nil {
+		return errors.New("回收站记录不存在或无权操作")
+	}
+	if err := dao.HardDeleteHTMLRecordDataByHTMLRecordID(record.ID); err != nil {
+		return err
+	}
+	if err := dao.HardDeleteHTMLRecordLikesByHTMLRecordID(record.ID); err != nil {
+		return err
+	}
+	return dao.HardDeleteHTMLRecord(record)
 }
 
 func validateFullHTMLStructure(htmlContent string) error {

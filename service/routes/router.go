@@ -59,6 +59,7 @@ func SetupRouter() *gin.Engine {
 		{
 			htmlGroup.POST("/upload", htmlRecordApi.Upload)
 			htmlGroup.GET("/my", htmlRecordApi.MyList)
+			htmlGroup.GET("/my/recycle", htmlRecordApi.MyRecycleList)
 			htmlGroup.GET("/liked", htmlRecordLikeApi.MyLikes)
 			htmlGroup.POST("/data/save", htmlRecordDataApi.Save)
 			htmlGroup.GET("/data/load", htmlRecordDataApi.Load)
@@ -67,6 +68,8 @@ func SetupRouter() *gin.Engine {
 			htmlGroup.GET("/data/my/:id/export", htmlRecordDataApi.ExportMyData)
 			htmlGroup.DELETE("/data/my/:id", htmlRecordDataApi.DeleteMyData)
 			htmlGroup.DELETE("/:id", htmlRecordApi.Delete)
+			htmlGroup.PUT("/:id/restore", htmlRecordApi.Restore)
+			htmlGroup.DELETE("/:id/hard", htmlRecordApi.HardDelete)
 			htmlGroup.PUT("/:id/description", htmlRecordApi.UpdateDescription)
 			htmlGroup.PUT("/:id/content", htmlRecordApi.UpdateHTMLContent)
 			htmlGroup.PUT("/:id/visibility", htmlRecordApi.UpdateVisibility)

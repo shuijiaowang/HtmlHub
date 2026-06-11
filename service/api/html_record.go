@@ -65,6 +65,22 @@ func (h *HTMLRecordApi) MyList(c *gin.Context) {
 	response.OkWithData(records, c)
 }
 
+func (h *HTMLRecordApi) MyRecycleList(c *gin.Context) {
+	userInfo := util.GetUserInfo(c)
+	if userInfo == nil || userInfo.ID <= 0 {
+		response.FailWithMessage("未获取到用户信息", c)
+		return
+	}
+
+	records, err := htmlRecordService.ListRecycleByUserID(uint(userInfo.ID))
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithData(records, c)
+}
+
 func (h *HTMLRecordApi) Delete(c *gin.Context) {
 	userInfo := util.GetUserInfo(c)
 	if userInfo == nil || userInfo.ID <= 0 {
@@ -84,7 +100,55 @@ func (h *HTMLRecordApi) Delete(c *gin.Context) {
 	}
 
 	response.OkWithData(gin.H{
-		"deleted": true,
+		"deleted":           true,
+		"movedToRecycleBin": true,
+	}, c)
+}
+
+func (h *HTMLRecordApi) Restore(c *gin.Context) {
+	userInfo := util.GetUserInfo(c)
+	if userInfo == nil || userInfo.ID <= 0 {
+		response.FailWithMessage("未获取到用户信息", c)
+		return
+	}
+
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.FailWithMessage("记录ID无效", c)
+		return
+	}
+
+	if err := htmlRecordService.RestoreByUserID(uint(userInfo.ID), uint(id)); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithData(gin.H{
+		"restored": true,
+	}, c)
+}
+
+func (h *HTMLRecordApi) HardDelete(c *gin.Context) {
+	userInfo := util.GetUserInfo(c)
+	if userInfo == nil || userInfo.ID <= 0 {
+		response.FailWithMessage("未获取到用户信息", c)
+		return
+	}
+
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.FailWithMessage("记录ID无效", c)
+		return
+	}
+
+	if err := htmlRecordService.HardDeleteByUserID(uint(userInfo.ID), uint(id)); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithData(gin.H{
+		"deleted":    true,
+		"hardDelete": true,
 	}, c)
 }
 

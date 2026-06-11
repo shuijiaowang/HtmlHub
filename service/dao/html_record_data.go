@@ -77,6 +77,15 @@ func SoftDeleteHTMLRecordDataByUserID(userID uint) (int64, error) {
 	return res.RowsAffected, res.Error
 }
 
+func HardDeleteHTMLRecordDataByHTMLRecordID(htmlRecordID uint) error {
+	if htmlRecordID == 0 {
+		return nil
+	}
+	return db.DB.Unscoped().
+		Where("html_record_id = ?", htmlRecordID).
+		Delete(&model.HtmlRecordData{}).Error
+}
+
 type AdminHTMLRecordDataQuery struct {
 	Nickname  string
 	Email     string

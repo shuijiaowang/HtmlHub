@@ -30,15 +30,19 @@
             <div class="stat-value">{{ totalLikeCount }}</div>
           </div>
           <div class="stat">
-            <div class="stat-label">记录数</div>
-            <div class="stat-value">{{ records.length }}</div>
+            <div class="stat-label">使用中</div>
+            <div class="stat-value">{{ records.length }}/5</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">累计</div>
+            <div class="stat-value">{{ totalRecordCount }}/10</div>
           </div>
         </div>
-        <p v-if="records.length === 0" class="empty">暂无记录</p>
+        <p v-if="records.length === 0" class="empty">暂无使用中的记录</p>
         <div v-else class="record-list">
           <article v-for="item in records" :key="item.id" class="record-item">
             <div class="record-head">
-              <strong>{{ item.fileName }}</strong>
+              <strong>{{ item.subdomain }}</strong>
               <span>{{ formatSize(item.fileSize) }}</span>
             </div>
             <p class="record-route">
@@ -82,9 +86,36 @@
               <button class="text-btn" @click="togglePublishMode(item)">
                 {{ item.publishMode ? '关闭发布模式' : '开启发布模式' }}
               </button>
-              <button class="text-btn danger-btn" @click="removeRecord(item)">删除</button>
+              <button class="text-btn danger-btn" @click="removeRecord(item)">移入回收箱</button>
             </div>
           </article>
+        </div>
+        <div class="recycle-section">
+          <div class="records-title-row recycle-head">
+            <div class="title-wrap">
+              <h3 class="title">回收箱<span v-if="recycleRecords.length" class="recycle-count">（{{ recycleRecords.length }}）</span></h3>
+              <p class="subtitle">移入回收箱不占新额度；彻底删除后累计占用下降，方可继续上传。</p>
+            </div>
+          </div>
+          <p v-if="recycleRecords.length === 0" class="empty">回收箱为空</p>
+          <div v-else class="record-list">
+            <article v-for="item in recycleRecords" :key="item.id" class="record-item recycle-item">
+              <div class="record-head">
+                <strong>{{ item.subdomain }}</strong>
+                <span>{{ formatSize(item.fileSize) }}</span>
+              </div>
+              <p class="record-route">原访问链接：{{ item.subdomain }}.{{ htmlPublicHost }}</p>
+              <p class="record-desc">{{ item.description ? `简介：${item.description}` : '简介：无简介' }}</p>
+              <div class="record-meta">
+                <span>更新时间：{{ formatDate(item.updatedAt) }}</span>
+                <span>创建时间：{{ formatDate(item.createdAt) }}</span>
+              </div>
+              <div class="record-actions">
+                <button class="text-btn" type="button" @click="restoreRecord(item)">恢复</button>
+                <button class="text-btn danger-btn" type="button" @click="permanentlyDeleteRecord(item)">彻底删除</button>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
     </main>
@@ -123,10 +154,13 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, ref, unref } from 'vue'
+import {computed, nextTick, onMounted, ref, unref} from 'vue'
 import {
   deleteHtmlRecord,
+  getMyHtmlRecycleList,
   getMyHtmlList,
+  hardDeleteHtmlRecord,
+  restoreHtmlRecord,
   updateHtmlContent,
   updateHtmlDescription,
   updateHtmlVisibility,
@@ -140,8 +174,8 @@ import { View } from '@element-plus/icons-vue'
 const htmlPublicHost = import.meta.env.VITE_HTML_PUBLIC_HOST || 'localhost:7789'
 
 const records = ref([])
+const recycleRecords = ref([])
 const userStore = useUserStore()
-const isLoggedIn = computed(() => !!userStore.token)
 
 const descDialogVisible = ref(false)
 const htmlDialogVisible = ref(false)
@@ -274,14 +308,17 @@ const totalLikeCount = computed(() => {
   return records.value.reduce((total, item) => total + (Number(item.likeCount) || 0), 0)
 })
 
+const totalRecordCount = computed(() => records.value.length + recycleRecords.value.length)
+
 const loadRecords = async () => {
   if (!userStore.token) {
     ElMessage.warning('请先登录后查看个人记录')
     userStore.openAuthDialog('login')
     return
   }
-  const res = await getMyHtmlList()
-  records.value = Array.isArray(res.data) ? res.data : []
+  const [activeRes, recycleRes] = await Promise.all([getMyHtmlList(), getMyHtmlRecycleList()])
+  records.value = Array.isArray(activeRes.data) ? activeRes.data : []
+  recycleRecords.value = Array.isArray(recycleRes.data) ? recycleRes.data : []
 }
 
 const formatSize = (size) => {
@@ -320,8 +357,23 @@ const togglePublishMode = async (item) => {
 }
 
 const removeRecord = async (item) => {
-  if (!window.confirm(`确定删除「${item.fileName}」吗？`)) return
+  if (!window.confirm(`确定将「${item.subdomain}」移入回收箱吗？`)) return
   await deleteHtmlRecord(item.id)
+  ElMessage.success('已移入回收箱')
+  await loadRecords()
+}
+
+const restoreRecord = async (item) => {
+  if (!window.confirm(`确定恢复「${item.subdomain}」吗？`)) return
+  await restoreHtmlRecord(item.id)
+  ElMessage.success('已恢复')
+  await loadRecords()
+}
+
+const permanentlyDeleteRecord = async (item) => {
+  if (!window.confirm(`确定彻底删除「${item.subdomain}」吗？该操作不可恢复。`)) return
+  await hardDeleteHtmlRecord(item.id)
+  ElMessage.success('已彻底删除')
   await loadRecords()
 }
 
@@ -441,7 +493,7 @@ onMounted(async () => {
 
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin: 14px 0 16px;
 }
@@ -516,6 +568,27 @@ onMounted(async () => {
   transform: translateY(-1px);
   border-color: rgb(var(--hh-brand-rgb) / 0.22);
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+}
+
+.recycle-section {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hh-border);
+}
+
+.recycle-head {
+  margin-bottom: 8px;
+}
+
+.recycle-count {
+  margin-left: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hh-text-3);
+}
+
+.recycle-item {
+  opacity: 0.92;
 }
 
 .record-head {
@@ -639,7 +712,7 @@ onMounted(async () => {
     padding: 18px 12px;
   }
 
-  /* 保持三列一行，避免每项独占半屏 */
+  /* 保持统计卡片紧凑排列，避免每项独占半屏 */
   .stats-row {
     gap: 6px;
     margin: 12px 0 14px;
