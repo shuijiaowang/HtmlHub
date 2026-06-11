@@ -140,7 +140,7 @@ func (s *HTMLRecordDataService) DeleteMyData(userID, dataID uint) error {
 	if err != nil || item == nil || item.ID == 0 {
 		return errors.New("数据不存在或无权访问")
 	}
-	return dao.SoftDeleteHTMLRecordData(item)
+	return dao.HardDeleteHTMLRecordData(item)
 }
 
 // ClearMyData 清空当前用户的全部同步数据，返回清空条数。
@@ -148,7 +148,7 @@ func (s *HTMLRecordDataService) ClearMyData(userID uint) (int64, error) {
 	if userID == 0 {
 		return 0, errors.New("用户信息无效")
 	}
-	return dao.SoftDeleteHTMLRecordDataByUserID(userID)
+	return dao.HardDeleteHTMLRecordDataByUserID(userID)
 }
 
 func (s *HTMLRecordDataService) AdminList(params dao.AdminHTMLRecordDataQuery) ([]dao.AdminHTMLRecordDataRow, int64, error) {

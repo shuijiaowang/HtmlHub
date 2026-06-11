@@ -293,30 +293,30 @@ const exportData = async (item) => {
 const removeData = async (item) => {
   try {
     await ElMessageBox.confirm(
-      `确定删除「${item.subdomain}」的云同步数据吗？该操作不可恢复。`,
-      '删除同步数据',
-      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+      `确定删除「${item.subdomain}」的云端同步数据吗？云端数据将被永久删除，不可恢复。`,
+      '删除云端数据',
+      { type: 'warning', confirmButtonText: '永久删除', cancelButtonText: '取消' }
     )
   } catch {
     return
   }
   await deleteMySyncData(item.id)
-  ElMessage.success('已删除')
+  ElMessage.success('云端数据已删除')
   await loadData()
 }
 
 const clearAll = async () => {
   try {
     await ElMessageBox.confirm(
-      '确定清空你的全部云同步数据吗？该操作不可恢复。',
-      '清空全部',
-      { type: 'warning', confirmButtonText: '清空', cancelButtonText: '取消' }
+      '确定清空你的全部云端同步数据吗？云端数据将被永久删除，不可恢复。',
+      '清空云端数据',
+      { type: 'warning', confirmButtonText: '永久清空', cancelButtonText: '取消' }
     )
   } catch {
     return
   }
   await clearMySyncData()
-  ElMessage.success('已清空')
+  ElMessage.success('云端数据已清空')
   await loadData()
 }
 

@@ -66,14 +66,14 @@ func FindHTMLRecordDataByIDAndUserID(id, userID uint) (*model.HtmlRecordData, er
 	return &item, err
 }
 
-// SoftDeleteHTMLRecordData 软删除单条同步数据。
-func SoftDeleteHTMLRecordData(item *model.HtmlRecordData) error {
-	return db.DB.Delete(item).Error
+// HardDeleteHTMLRecordData 永久删除单条同步数据。
+func HardDeleteHTMLRecordData(item *model.HtmlRecordData) error {
+	return db.DB.Unscoped().Delete(item).Error
 }
 
-// SoftDeleteHTMLRecordDataByUserID 清空某用户的全部同步数据，返回受影响行数。
-func SoftDeleteHTMLRecordDataByUserID(userID uint) (int64, error) {
-	res := db.DB.Where("user_id = ?", userID).Delete(&model.HtmlRecordData{})
+// HardDeleteHTMLRecordDataByUserID 永久清空某用户的全部同步数据，返回受影响行数。
+func HardDeleteHTMLRecordDataByUserID(userID uint) (int64, error) {
+	res := db.DB.Unscoped().Where("user_id = ?", userID).Delete(&model.HtmlRecordData{})
 	return res.RowsAffected, res.Error
 }
 
