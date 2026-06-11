@@ -4,6 +4,7 @@ import (
 	"errors"
 	"htmlhub/dao"
 	"htmlhub/model"
+	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -67,10 +68,84 @@ func (s *UserService) Login(email, password string) (*model.User, bool) {
 }
 
 type AdminUserListItem struct {
-	ID       uint   `json:"id"`
-	Nickname string `json:"nickname"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
+	ID                   uint   `json:"id"`
+	Nickname             string `json:"nickname"`
+	Email                string `json:"email"`
+	Role                 string `json:"role"`
+	MaxHTMLContentBytes  int64  `json:"maxHtmlContentBytes"`
+	MaxHTMLDataBytes     int64  `json:"maxHtmlDataBytes"`
+	MaxActiveHTMLRecords int64  `json:"maxActiveHtmlRecords"`
+	MaxTotalHTMLRecords  int64  `json:"maxTotalHtmlRecords"`
+	ActiveUploadCount    int64  `json:"activeUploadCount"`
+	TotalUploadCount     int64  `json:"totalUploadCount"`
+	ActiveHTMLBytes      int64  `json:"activeHtmlBytes"`
+	HTMLDataBytes        int64  `json:"htmlDataBytes"`
+}
+
+type AdminUpdateUserInput struct {
+	Nickname             string
+	Email                string
+	Password             string // 为空表示不修改密码
+	Role                 string
+	MaxHTMLContentBytes  int64
+	MaxHTMLDataBytes     int64
+	MaxActiveHTMLRecords int64
+	MaxTotalHTMLRecords  int64
+}
+
+func (s *UserService) AdminUpdateUser(id uint, in AdminUpdateUserInput) error {
+	if id == 0 {
+		return errors.New("用户ID无效")
+	}
+	user, err := dao.FindUserByID(id)
+	if err != nil || user == nil || user.ID == 0 {
+		return errors.New("用户不存在")
+	}
+
+	nickname := strings.TrimSpace(in.Nickname)
+	email := strings.TrimSpace(in.Email)
+	if len(nickname) < 2 || len(nickname) > 20 {
+		return errors.New("昵称长度需为2-20位")
+	}
+	if email == "" {
+		return errors.New("邮箱不能为空")
+	}
+	if in.Role != model.UserRoleUser && in.Role != model.UserRoleAdmin && in.Role != model.UserRoleSuperAdmin {
+		return errors.New("角色参数错误")
+	}
+	if in.MaxHTMLContentBytes <= 0 || in.MaxHTMLDataBytes <= 0 || in.MaxActiveHTMLRecords <= 0 || in.MaxTotalHTMLRecords <= 0 {
+		return errors.New("限制项必须为正整数")
+	}
+
+	if existing, e := dao.FindUserByNickname(nickname); e == nil && existing != nil && existing.ID != id {
+		return errors.New("昵称已存在")
+	}
+	if existing, e := dao.FindUserByEmail(email); e == nil && existing != nil && existing.ID != id {
+		return errors.New("邮箱已注册")
+	}
+
+	fields := map[string]interface{}{
+		"nickname":                nickname,
+		"email":                   email,
+		"role":                    in.Role,
+		"max_html_content_bytes":  in.MaxHTMLContentBytes,
+		"max_html_data_bytes":     in.MaxHTMLDataBytes,
+		"max_active_html_records": in.MaxActiveHTMLRecords,
+		"max_total_html_records":  in.MaxTotalHTMLRecords,
+	}
+
+	if pwd := strings.TrimSpace(in.Password); pwd != "" {
+		if len(pwd) < 6 || len(pwd) > 64 {
+			return errors.New("密码长度需为6-64位")
+		}
+		hashed, e := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
+		if e != nil {
+			return errors.New("密码加密失败")
+		}
+		fields["password"] = string(hashed)
+	}
+
+	return dao.UpdateUserFields(id, fields)
 }
 
 func (s *UserService) AdminListUsers(page, pageSize int) ([]AdminUserListItem, int64, error) {
@@ -87,10 +162,18 @@ func (s *UserService) AdminListUsers(page, pageSize int) ([]AdminUserListItem, i
 	items := make([]AdminUserListItem, 0, len(users))
 	for _, user := range users {
 		items = append(items, AdminUserListItem{
-			ID:       user.ID,
-			Nickname: user.Nickname,
-			Email:    user.Email,
-			Role:     user.Role,
+			ID:                   user.ID,
+			Nickname:             user.Nickname,
+			Email:                user.Email,
+			Role:                 user.Role,
+			MaxHTMLContentBytes:  user.MaxHTMLContentBytes,
+			MaxHTMLDataBytes:     user.MaxHTMLDataBytes,
+			MaxActiveHTMLRecords: user.MaxActiveHTMLRecords,
+			MaxTotalHTMLRecords:  user.MaxTotalHTMLRecords,
+			ActiveUploadCount:    user.ActiveUploadCount,
+			TotalUploadCount:     user.TotalUploadCount,
+			ActiveHTMLBytes:      user.ActiveHTMLBytes,
+			HTMLDataBytes:        user.HTMLDataBytes,
 		})
 	}
 	return items, total, nil

@@ -1,6 +1,7 @@
 package api
 
 import (
+	service2 "htmlhub/service"
 	"htmlhub/util"
 	"htmlhub/util/response"
 	"strconv"
@@ -91,6 +92,45 @@ func (h *UserApi) AdminList(c *gin.Context) {
 		"page":     page,
 		"pageSize": pageSize,
 	}, c)
+}
+
+func (h *UserApi) AdminUpdateUser(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.FailWithMessage("用户ID无效", c)
+		return
+	}
+
+	var req struct {
+		Nickname             string `json:"nickname"`
+		Email                string `json:"email"`
+		Password             string `json:"password"`
+		Role                 string `json:"role"`
+		MaxHTMLContentBytes  int64  `json:"maxHtmlContentBytes"`
+		MaxHTMLDataBytes     int64  `json:"maxHtmlDataBytes"`
+		MaxActiveHTMLRecords int64  `json:"maxActiveHtmlRecords"`
+		MaxTotalHTMLRecords  int64  `json:"maxTotalHtmlRecords"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage("参数错误", c)
+		return
+	}
+
+	if err := userService.AdminUpdateUser(uint(id), service2.AdminUpdateUserInput{
+		Nickname:             req.Nickname,
+		Email:                req.Email,
+		Password:             req.Password,
+		Role:                 req.Role,
+		MaxHTMLContentBytes:  req.MaxHTMLContentBytes,
+		MaxHTMLDataBytes:     req.MaxHTMLDataBytes,
+		MaxActiveHTMLRecords: req.MaxActiveHTMLRecords,
+		MaxTotalHTMLRecords:  req.MaxTotalHTMLRecords,
+	}); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithMessage("更新成功", c)
 }
 
 func (h *UserApi) Test(c *gin.Context) {

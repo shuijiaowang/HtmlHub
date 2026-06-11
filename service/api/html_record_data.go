@@ -1,8 +1,11 @@
 package api
 
 import (
+	"htmlhub/dao"
 	"htmlhub/util"
 	"htmlhub/util/response"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -61,5 +64,28 @@ func (h *HTMLRecordDataApi) PublishLoad(c *gin.Context) {
 
 	response.OkWithData(gin.H{
 		"dataJson": dataJSON,
+	}, c)
+}
+
+func (h *HTMLRecordDataApi) AdminList(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	rows, total, err := htmlRecordDataService.AdminList(dao.AdminHTMLRecordDataQuery{
+		Nickname:  strings.TrimSpace(c.Query("nickname")),
+		Email:     strings.TrimSpace(c.Query("email")),
+		Subdomain: strings.TrimSpace(c.Query("subdomain")),
+		Page:      page,
+		PageSize:  pageSize,
+	})
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	response.OkWithData(gin.H{
+		"list":     rows,
+		"total":    total,
+		"page":     page,
+		"pageSize": pageSize,
 	}, c)
 }

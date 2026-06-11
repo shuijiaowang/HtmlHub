@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"htmlhub/dao"
 	"htmlhub/model"
 	"strings"
@@ -23,8 +24,8 @@ func (s *HTMLRecordDataService) SaveBySubdomain(userID uint, subdomain, dataJSON
 		return errors.New("同步数据不能为空")
 	}
 	limits := getHTMLRecordLimits(userID)
-	if len([]byte(dataJSON)) > limits.MaxDataBytes {
-		return errors.New("同步数据不能超过100KB")
+	if int64(len([]byte(dataJSON))) > limits.MaxDataBytes {
+		return fmt.Errorf("同步数据不能超过%s", formatBytes(limits.MaxDataBytes))
 	}
 
 	record, err := dao.FindHTMLRecordBySubdomain(subdomain)
@@ -87,6 +88,19 @@ func (s *HTMLRecordDataService) PublishLoadBySubdomain(subdomain string) (string
 		return "", errors.New("页面未公开")
 	}
 	return s.loadPublisherData(record)
+}
+
+func (s *HTMLRecordDataService) AdminList(params dao.AdminHTMLRecordDataQuery) ([]dao.AdminHTMLRecordDataRow, int64, error) {
+	if params.Page <= 0 {
+		params.Page = 1
+	}
+	if params.PageSize <= 0 || params.PageSize > 100 {
+		params.PageSize = 10
+	}
+	params.Nickname = strings.TrimSpace(params.Nickname)
+	params.Email = strings.TrimSpace(params.Email)
+	params.Subdomain = strings.TrimSpace(params.Subdomain)
+	return dao.ListHTMLRecordDataForAdmin(params)
 }
 
 func (s *HTMLRecordDataService) loadPublisherData(record *model.HtmlRecord) (string, error) {

@@ -34,6 +34,14 @@
       <el-table-column prop="nickname" label="昵称" min-width="120" />
       <el-table-column prop="email" label="邮箱" min-width="180" />
       <el-table-column prop="subdomain" label="子域名" min-width="140" />
+      <el-table-column label="打开链接" width="100">
+        <template #default="{ row }">
+          <el-button link type="primary" @click="openPublicLink(row)">打开</el-button>
+        </template>
+      </el-table-column>
+      <el-table-column label="HTML体积" width="120">
+        <template #default="{ row }">{{ formatSize(row.fileSize) }}</template>
+      </el-table-column>
       <el-table-column prop="visibility" label="公开私密" width="110">
         <template #default="{ row }">{{ formatVisibility(row.visibility) }}</template>
       </el-table-column>
@@ -75,6 +83,7 @@
       <div v-if="detail" class="detail-meta">
         <span>文件：{{ detail.fileName }}</span>
         <span>子域名：{{ detail.subdomain }}</span>
+        <span>体积：{{ formatSize(detail.fileSize) }}</span>
         <span>用户：{{ detail.nickname }} / {{ detail.email }}</span>
       </div>
       <pre class="html-preview">{{ detail?.htmlContent || '' }}</pre>
@@ -96,6 +105,7 @@ import {
 const records = ref([])
 const detail = ref(null)
 const detailVisible = ref(false)
+const htmlPublicHost = import.meta.env.VITE_HTML_PUBLIC_HOST || 'localhost:7789'
 const filters = reactive({
   nickname: '',
   email: '',
@@ -123,6 +133,10 @@ const openDetail = async (row) => {
   const res = await getAdminHtmlDetail(row.id)
   detail.value = res.data
   detailVisible.value = true
+}
+
+const openPublicLink = (row) => {
+  window.open(buildPublicUrl(row.subdomain), '_blank', 'noopener,noreferrer')
 }
 
 const updateApproval = async (row, approvalStatus) => {
@@ -171,6 +185,20 @@ const formatApprovalStatus = (status) => {
     rejected: '拒绝'
   }
   return statusMap[status] || '未审核'
+}
+
+const formatSize = (size) => {
+  const value = Number(size) || 0
+  if (value <= 0) return '0 B'
+  if (value < 1024) return `${value} B`
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`
+  return `${(value / (1024 * 1024)).toFixed(2)} MB`
+}
+
+const buildPublicUrl = (subdomain) => {
+  const host = String(htmlPublicHost).replace(/^https?:\/\//, '').replace(/\/$/, '')
+  const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http:' : window.location.protocol
+  return `${protocol}//${subdomain}.${host}`
 }
 
 onMounted(loadRecords)

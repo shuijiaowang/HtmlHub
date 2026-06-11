@@ -2,9 +2,15 @@
 import { computed, ref } from 'vue'
 import UserManagement from '@/components/Admin/UserManagement.vue'
 import HtmlManagement from '@/components/Admin/HtmlManagement.vue'
+import HtmlDataManagement from '@/components/Admin/HtmlDataManagement.vue'
 
 const activeMenu = ref('users')
-const currentTitle = computed(() => (activeMenu.value === 'users' ? '用户管理' : 'HTML管理'))
+const titleMap = {
+  users: '用户管理',
+  html: 'HTML管理',
+  htmlData: '同步数据'
+}
+const currentTitle = computed(() => titleMap[activeMenu.value] || '管理后台')
 </script>
 
 <template>
@@ -14,6 +20,7 @@ const currentTitle = computed(() => (activeMenu.value === 'users' ? '用户管�
       <el-menu :default-active="activeMenu" class="admin-menu" @select="activeMenu = $event">
         <el-menu-item index="users">用户管理</el-menu-item>
         <el-menu-item index="html">HTML管理</el-menu-item>
+        <el-menu-item index="htmlData">同步数据</el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
@@ -22,7 +29,8 @@ const currentTitle = computed(() => (activeMenu.value === 'users' ? '用户管�
       </el-header>
       <el-main class="admin-main">
         <UserManagement v-if="activeMenu === 'users'" />
-        <HtmlManagement v-else />
+        <HtmlManagement v-else-if="activeMenu === 'html'" />
+        <HtmlDataManagement v-else />
       </el-main>
     </el-container>
   </el-container>

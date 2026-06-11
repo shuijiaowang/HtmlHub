@@ -24,20 +24,41 @@ const (
 )
 
 const (
-	defaultHTMLContentLimitBytes = 1 * 1024 * 1024
+	defaultHTMLContentLimitBytes = 500 * 1024
 	defaultHTMLDataLimitBytes    = 100 * 1024
-	defaultActiveUploadLimit     = 20
-	defaultTotalUploadLimit      = 100
+	defaultActiveUploadLimit     = 5
+	defaultTotalUploadLimit      = 10
 )
 
 type HTMLRecordLimits struct {
-	MaxHTMLContentBytes int
-	MaxDataBytes        int
+	MaxHTMLContentBytes int64
+	MaxDataBytes        int64
 	MaxActiveUploads    int64
 	MaxTotalUploads     int64
 }
 
 func getHTMLRecordLimits(userID uint) HTMLRecordLimits {
+	limits := defaultHTMLRecordLimits()
+	user, err := dao.FindUserByID(userID)
+	if err != nil || user == nil || user.ID == 0 {
+		return limits
+	}
+	if user.MaxHTMLContentBytes > 0 {
+		limits.MaxHTMLContentBytes = user.MaxHTMLContentBytes
+	}
+	if user.MaxHTMLDataBytes > 0 {
+		limits.MaxDataBytes = user.MaxHTMLDataBytes
+	}
+	if user.MaxActiveHTMLRecords > 0 {
+		limits.MaxActiveUploads = user.MaxActiveHTMLRecords
+	}
+	if user.MaxTotalHTMLRecords > 0 {
+		limits.MaxTotalUploads = user.MaxTotalHTMLRecords
+	}
+	return limits
+}
+
+func defaultHTMLRecordLimits() HTMLRecordLimits {
 	return HTMLRecordLimits{
 		MaxHTMLContentBytes: defaultHTMLContentLimitBytes,
 		MaxDataBytes:        defaultHTMLDataLimitBytes,
@@ -66,22 +87,23 @@ func (s *HTMLRecordService) Upload(userID uint, subdomain, fileName, description
 		return "", err
 	}
 	limits := getHTMLRecordLimits(userID)
-	if len([]byte(htmlContent)) > limits.MaxHTMLContentBytes {
-		return "", errors.New("HTML内容不能超过1MB")
+	htmlContentBytes := int64(len([]byte(htmlContent)))
+	if htmlContentBytes > limits.MaxHTMLContentBytes {
+		return "", fmt.Errorf("HTML内容不能超过%s", formatBytes(limits.MaxHTMLContentBytes))
 	}
 	activeCount, err := dao.CountHTMLRecordsByUserID(userID)
 	if err != nil {
 		return "", err
 	}
 	if activeCount >= limits.MaxActiveUploads {
-		return "", errors.New("未删除上传数量已达20个，请删除后再上传")
+		return "", fmt.Errorf("未删除上传数量已达%d个，请删除后再上传", limits.MaxActiveUploads)
 	}
 	totalCount, err := dao.CountAllHTMLRecordsByUserID(userID)
 	if err != nil {
 		return "", err
 	}
 	if totalCount >= limits.MaxTotalUploads {
-		return "", errors.New("累计上传数量已达100个，无法继续上传")
+		return "", fmt.Errorf("累计上传数量已达%d个，无法继续上传", limits.MaxTotalUploads)
 	}
 	subdomain, err = s.buildSubdomain(userID, subdomain)
 	if err != nil {
@@ -100,7 +122,7 @@ func (s *HTMLRecordService) Upload(userID uint, subdomain, fileName, description
 		Subdomain:      subdomain,
 		FileName:       fileName,
 		Description:    description,
-		FileSize:       fileSize,
+		FileSize:       htmlContentBytes,
 		HTMLContent:    htmlContent,
 		Visibility:     HTMLVisibilityPublic,
 		ApprovalStatus: model.HTMLApprovalPending,
@@ -177,8 +199,9 @@ func (s *HTMLRecordService) UpdateHTMLContentByUserID(userID, id uint, htmlConte
 		return nil, err
 	}
 	limits := getHTMLRecordLimits(userID)
-	if len([]byte(htmlContent)) > limits.MaxHTMLContentBytes {
-		return nil, errors.New("HTML内容不能超过1MB")
+	htmlContentBytes := int64(len([]byte(htmlContent)))
+	if htmlContentBytes > limits.MaxHTMLContentBytes {
+		return nil, fmt.Errorf("HTML内容不能超过%s", formatBytes(limits.MaxHTMLContentBytes))
 	}
 	record, err := dao.FindHTMLRecordByIDAndUserID(id, userID)
 	if err != nil {
@@ -195,10 +218,11 @@ func (s *HTMLRecordService) UpdateHTMLContentByUserID(userID, id uint, htmlConte
 		nextStatus = model.HTMLApprovalPending
 	}
 
-	if err := dao.UpdateHTMLRecordContentAndSetApproval(record, htmlContent, nextStatus); err != nil {
+	if err := dao.UpdateHTMLRecordContentAndSetApproval(record, htmlContent, htmlContentBytes, nextStatus); err != nil {
 		return nil, err
 	}
 	record.HTMLContent = htmlContent
+	record.FileSize = htmlContentBytes
 	record.ApprovalStatus = nextStatus
 	return record, nil
 }
@@ -413,4 +437,14 @@ func randomSubdomainSuffix(length int) string {
 
 func isValidApprovalStatus(status string) bool {
 	return status == model.HTMLApprovalPending || status == model.HTMLApprovalApproved || status == model.HTMLApprovalRejected
+}
+
+func formatBytes(size int64) string {
+	if size < 1024 {
+		return fmt.Sprintf("%dB", size)
+	}
+	if size < 1024*1024 {
+		return fmt.Sprintf("%.0fKB", float64(size)/1024)
+	}
+	return fmt.Sprintf("%.2fMB", float64(size)/(1024*1024))
 }

@@ -68,11 +68,13 @@ func SetupRouter() *gin.Engine {
 		adminGroup.Use(middleware.HighRiskWriteRateLimit())
 		{
 			adminGroup.GET("/users", userApi.AdminList)
+			adminGroup.PUT("/users/:id", userApi.AdminUpdateUser)
 			adminGroup.GET("/html", htmlRecordApi.AdminList)
 			adminGroup.GET("/html/:id", htmlRecordApi.AdminDetail)
 			adminGroup.PUT("/html/:id/approval", htmlRecordApi.AdminUpdateApprovalStatus)
 			adminGroup.PUT("/html/:id/subdomain", htmlRecordApi.AdminUpdateSubdomain)
 			adminGroup.DELETE("/html/:id", htmlRecordApi.AdminDelete)
+			adminGroup.GET("/html-data", htmlRecordDataApi.AdminList)
 		}
 
 	}

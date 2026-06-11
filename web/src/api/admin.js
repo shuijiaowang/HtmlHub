@@ -8,6 +8,14 @@ export const getAdminUsers = (params) => {
   })
 }
 
+export const updateAdminUser = (id, data) => {
+  return service({
+    url: `/admin/users/${id}`,
+    method: 'put',
+    data
+  })
+}
+
 export const getAdminHtmlList = (params) => {
   return service({
     url: '/admin/html',
@@ -43,5 +51,13 @@ export const deleteAdminHtml = (id) => {
   return service({
     url: `/admin/html/${id}`,
     method: 'delete'
+  })
+}
+
+export const getAdminHtmlDataList = (params) => {
+  return service({
+    url: '/admin/html-data',
+    method: 'get',
+    params
   })
 }
